@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="276" viewBox="0 0 720 276" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .t { fill: #1f2328; }
+    .m { fill: #59636e; }
+    .fixed { fill: #d1d9e0; }
+    .searched { fill: #0969da; }
+    .save { fill: #0969da; font-weight: 600; }
+  </style>
+  <text class="t" x="0" y="22" font-size="16" font-weight="600">Bytes to get every image to the same quality floor</text>
+  <text class="m" x="0" y="44" font-size="13">155 real email images at 640w · lower is better</text>
+  <rect class="fixed" x="420" y="34" width="12" height="12" rx="2"/>
+  <text class="m" x="438" y="44" font-size="13">one fixed quality</text>
+  <rect class="searched" x="560" y="34" width="12" height="12" rx="2"/>
+  <text class="m" x="578" y="44" font-size="13">presize --target</text>
+
+  <g transform="translate(0,76)">
+    <text class="t" x="0" y="21" font-size="14" font-weight="600">AVIF ≥ 70</text>
+    <rect class="fixed" x="120" y="0" width="229" height="14" rx="3"/>
+    <text class="m" x="357" y="12" font-size="12">1682 KiB · q60</text>
+    <rect class="searched" x="120" y="18" width="151" height="14" rx="3"/>
+    <text class="m" x="279" y="30" font-size="12">1110 KiB  <tspan class="save">−34%</tspan></text>
+  </g>
+  <g transform="translate(0,128)">
+    <text class="t" x="0" y="21" font-size="14" font-weight="600">AVIF ≥ 80</text>
+    <rect class="fixed" x="120" y="0" width="298" height="14" rx="3"/>
+    <text class="m" x="426" y="12" font-size="12">2191 KiB · q70</text>
+    <rect class="searched" x="120" y="18" width="232" height="14" rx="3"/>
+    <text class="m" x="360" y="30" font-size="12">1700 KiB  <tspan class="save">−22%</tspan></text>
+  </g>
+  <g transform="translate(0,180)">
+    <text class="t" x="0" y="21" font-size="14" font-weight="600">WebP ≥ 70</text>
+    <rect class="fixed" x="120" y="0" width="361" height="14" rx="3"/>
+    <text class="m" x="489" y="12" font-size="12">2647 KiB · q85</text>
+    <rect class="searched" x="120" y="18" width="213" height="14" rx="3"/>
+    <text class="m" x="341" y="30" font-size="12">1562 KiB  <tspan class="save">−41%</tspan></text>
+  </g>
+  <g transform="translate(0,232)">
+    <text class="t" x="0" y="21" font-size="14" font-weight="600">WebP ≥ 80</text>
+    <rect class="fixed" x="120" y="0" width="460" height="14" rx="3"/>
+    <text class="m" x="588" y="12" font-size="12">3378 KiB · q90</text>
+    <rect class="searched" x="120" y="18" width="324" height="14" rx="3"/>
+    <text class="m" x="452" y="30" font-size="12">2379 KiB  <tspan class="save">−30%</tspan></text>
+  </g>
+</svg>
