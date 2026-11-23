@@ -1,0 +1,46 @@
+{
+  "name": "presize",
+  "version": "0.0.0",
+  "description": "Build-time image sizing: AVIF and WebP at the widths you display, a manifest with srcset and ThumbHash, incremental.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "presize": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY.md"
+  ],
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "node src/cli.ts",
+    "test": "node --test test/"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5",
+    "thumbhash": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "keywords": [
+    "image",
+    "avif",
+    "webp",
+    "srcset",
+    "responsive-images",
+    "thumbhash",
+    "build"
+  ]
+}
