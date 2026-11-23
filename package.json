@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "description": "Build-time image sizing: AVIF and WebP at the widths you display, a manifest with srcset and ThumbHash, incremental.",
   "license": "MIT",
+  "author": "jiatastic520",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jiatastic/presize.git"
+  },
+  "homepage": "https://github.com/jiatastic/presize#readme",
+  "bugs": {
+    "url": "https://github.com/jiatastic/presize/issues"
+  },
   "type": "module",
   "bin": {
     "presize": "./dist/cli.js"
@@ -23,8 +32,12 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "node --test \"test/*.test.ts\"",
     "dev": "node src/cli.ts",
-    "test": "node --test test/"
+    "prepublishOnly": "pnpm clean && pnpm build && pnpm test",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
   },
   "dependencies": {
     "sharp": "^0.35.5",
@@ -43,5 +56,6 @@
     "responsive-images",
     "thumbhash",
     "build"
-  ]
+  ],
+  "packageManager": "pnpm@10.11.0"
 }
