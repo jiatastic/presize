@@ -1,0 +1,29 @@
+.gitignore
+  s_cb0e8543114bf5::t_86e86c103e5e0c 1-4
+package.json
+  s_cb0e8543114bf5::t_23210fe283b8a5 1-16,19-25,28-46
+  s_cb0e8543114bf5::t_0bf086b6564435 17-18
+  s_cb0e8543114bf5::t_1b55a8e81031df 26-27
+LICENSE
+  s_cb0e8543114bf5::t_bc5074beb0f58a 1-21
+tsconfig.json
+  s_cb0e8543114bf5::t_2bbbf03be2787e 1-17
+pnpm-lock.yaml
+  s_cb0e8543114bf5::t_90cd9dc19d96f1 1-372
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "74fff4b9b6404e5fabde96c11a5460d5b8792ac5",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
