@@ -1,5 +1,7 @@
 # presize
 
+[![CI](https://github.com/jiatastic/presize/actions/workflows/ci.yml/badge.svg)](https://github.com/jiatastic/presize/actions/workflows/ci.yml)
+
 Image optimization at build time instead of on request. Point it at a folder; it writes AVIF
 and WebP at the widths you actually display, plus `presize.json` with `srcset` data and a
 ThumbHash placeholder for every image. Serve the files from any static host or CDN. There's no
@@ -64,19 +66,26 @@ rust-av crate. On the crate's reference pair it scores 17.39831 against the crat
 
 ## Read the manifest
 
+Import the helpers from `presize/manifest`. It has no runtime imports, so it doesn't load
+sharp where your pages render.
+
 ```ts
 import { readFile } from "node:fs/promises";
-import { picture, srcset, type Manifest } from "presize";
+import { type Manifest, picture, pictureSources } from "presize/manifest";
 
 const m: Manifest = JSON.parse(await readFile("public/img/presize.json", "utf8"));
 const e = m.images["brand/hero.jpg"];
 
-picture(e, { alt: "", sizes: "270px" }); // <picture> HTML string
-srcset(e, "avif");                        // for your own <source>
+picture(e, { alt: "", sizes: "270px" }); // <picture> as an HTML string
+pictureSources(e);                        // { avif, srcset, src } to build your own <picture>
 e.thumbhash;                              // decode with thumbHashToDataURL from "thumbhash"
 ```
 
-Keys are paths relative to the input folder, with `/` separators.
+Keys are paths relative to the input folder, with `/` separators. The manifest lists every
+image, so read it on the server or at build time, not in the browser.
+
+[`examples/`](examples) has a Next.js server component, an Astro component and a plain Node
+build script.
 
 ## Benchmark
 
