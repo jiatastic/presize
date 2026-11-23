@@ -1,8 +1,38 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["src/**", "test/**/*.ts", "bench/**", "examples/**", "*.json"] },
-  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
-  "linter": { "rules": { "preset": "recommended", "style": { "noNonNullAssertion": "off" } } },
-  "javascript": { "formatter": { "quoteStyle": "double", "trailingCommas": "all" } }
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "src/**",
+      "test/**/*.ts",
+      "bench/**",
+      "examples/**/*.ts",
+      "examples/**/*.tsx",
+      "examples/**/*.mjs",
+      "*.json"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noNonNullAssertion": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all"
+    }
+  }
 }

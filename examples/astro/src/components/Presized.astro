@@ -1,0 +1,37 @@
+---
+// Runs at build time: the manifest never reaches the browser.
+import { type Manifest, pictureSources } from "presize/manifest";
+import { thumbHashToDataURL } from "thumbhash";
+import data from "../../public/img/presize.json";
+
+interface Props {
+  /** Source path relative to ./images. */
+  name: string;
+  alt: string;
+  /** Same width as --display, e.g. "(max-width: 640px) 100vw, 400px". */
+  sizes: string;
+  priority?: boolean;
+}
+
+const { name, alt, sizes, priority = false } = Astro.props;
+const e = (data as Manifest).images[name];
+if (!e) throw new Error(`No presized image for ${name}. Run pnpm images.`);
+const p = pictureSources(e);
+const placeholder = thumbHashToDataURL(Buffer.from(e.thumbhash, "base64"));
+---
+
+<picture>
+  {p.avif && <source type="image/avif" srcset={p.avif} sizes={sizes} />}
+  <img
+    src={p.src}
+    srcset={p.srcset}
+    sizes={sizes}
+    width={e.width}
+    height={e.height}
+    alt={alt}
+    loading={priority ? "eager" : "lazy"}
+    fetchpriority={priority ? "high" : "auto"}
+    decoding="async"
+    style={`background-image: url(${placeholder}); background-size: cover; max-width: 100%; height: auto`}
+  />
+</picture>
