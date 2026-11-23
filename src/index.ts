@@ -4,9 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
 
-export { widthsFor } from "./encode.ts";
+import type { Entry, Format, Manifest } from "./manifest.ts";
 
-export type Format = "avif" | "webp";
+export { widthsFor } from "./encode.ts";
+export * from "./manifest.ts";
 
 export type Options = {
   /** Folder of source images. Read only. */
@@ -40,44 +41,6 @@ export type Options = {
     status: "made" | "kept" | "failed";
     error?: string;
   }) => void;
-};
-
-export type Variant = {
-  width: number;
-  height: number;
-  /** URL to put in srcset: `base` + `file`. */
-  src: string;
-  /** Path inside the out folder. */
-  file: string;
-  bytes: number;
-  /** Encoder quality used. Absent on a kept original. */
-  quality?: number;
-  /** SSIMULACRA2 against the source resized to this width, when a `target` was set. */
-  score?: number;
-};
-
-export type Entry = {
-  width: number;
-  height: number;
-  bytes: number;
-  /** Content hash of the source file. */
-  hash: string;
-  /** Base64 ThumbHash; decode with thumbHashToDataURL from the thumbhash package. */
-  thumbhash: string;
-  /** Smallest width first. */
-  sources: Partial<Record<Format, Variant[]>>;
-  /**
-   * A copy of the source, made when re-encoding it at full size came out bigger (common for
-   * small PNG logos). Serve it in place of the missing full-size variants.
-   */
-  original?: Variant;
-};
-
-export type Manifest = {
-  version: 1;
-  /** Hash of the settings that produced these files. A change re-encodes everything. */
-  settings: string;
-  images: Record<string, Entry>;
 };
 
 export type Result = {
@@ -200,38 +163,6 @@ export async function presize(options: Options): Promise<Result> {
   await writeFile(`${target}.tmp`, `${JSON.stringify(manifest, null, 1)}\n`);
   await rename(`${target}.tmp`, target);
   return result;
-}
-
-/**
- * `srcset` for one format, ready for <source>. Pass no format for the <img>: WebP plus the
- * kept original, which every browser can show.
- */
-export function srcset(entry: Entry, format?: Format) {
-  const list = format
-    ? (entry.sources[format] ?? [])
-    : [...(entry.sources.webp ?? []), ...(entry.original ? [entry.original] : [])];
-  return list.map((v) => `${v.src} ${v.width}w`).join(", ");
-}
-
-/** A <picture> as an HTML string: an AVIF <source>, and an <img> with WebP and the original. */
-export function picture(
-  entry: Entry,
-  attrs: { alt: string; sizes: string; loading?: "lazy" | "eager"; class?: string },
-) {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-  const img = entry.original ?? entry.sources.webp?.at(-1) ?? entry.sources.avif?.at(-1);
-  // An AVIF source without the full size would make 2x screens settle for a smaller file.
-  const avif = entry.sources.avif?.length && !entry.original ? entry.sources.avif : null;
-  const sources = avif
-    ? `<source type="image/avif" srcset="${esc(srcset(entry, "avif"))}" sizes="${esc(attrs.sizes)}">`
-    : "";
-  const fallback = srcset(entry) || srcset(entry, "avif");
-  return (
-    `<picture>${sources}<img src="${esc(img?.src ?? "")}" srcset="${esc(fallback)}" sizes="${esc(attrs.sizes)}"` +
-    ` width="${entry.width}" height="${entry.height}" alt="${esc(attrs.alt)}" loading="${attrs.loading ?? "lazy"}" decoding="async"` +
-    (attrs.class ? ` class="${esc(attrs.class)}"` : "") +
-    `></picture>`
-  );
 }
 
 export async function readManifest(out: string): Promise<Manifest | null> {
