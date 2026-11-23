@@ -23,7 +23,7 @@ const SRGB_BETA = 0.0030412825;
 const LUT = new Float32Array(65536);
 for (let i = 0; i < LUT.length; i++) {
   const x = i / 65535;
-  LUT[i] = x < 12.92 * SRGB_BETA ? x / 12.92 : Math.pow((x + (SRGB_ALPHA - 1)) / SRGB_ALPHA, 2.4);
+  LUT[i] = x < 12.92 * SRGB_BETA ? x / 12.92 : ((x + (SRGB_ALPHA - 1)) / SRGB_ALPHA) ** 2.4;
 }
 
 /**
@@ -48,9 +48,15 @@ export function linearPlanes(data: Uint16Array | Uint8Array, width: number, heig
 
 // All in f32, as the reference computes them.
 const fr = Math.fround;
-const M02 = fr(0.078), M00 = fr(0.3), M01 = fr(fr(1 - M02) - M00);
-const M12 = fr(0.078), M10 = fr(0.23), M11 = fr(fr(1 - M12) - M10);
-const M20 = fr(0.24342269), M21 = fr(0.20476745), M22 = fr(fr(1 - M20) - M21);
+const M02 = fr(0.078),
+  M00 = fr(0.3),
+  M01 = fr(fr(1 - M02) - M00);
+const M12 = fr(0.078),
+  M10 = fr(0.23),
+  M11 = fr(fr(1 - M12) - M10);
+const M20 = fr(0.24342269),
+  M21 = fr(0.20476745),
+  M22 = fr(fr(1 - M20) - M21);
 const BIAS = fr(0.0037930734);
 const BIAS_CBRT = fr(Math.cbrt(BIAS));
 
@@ -61,7 +67,9 @@ function toXyb(p: Planes): [Float32Array, Float32Array, Float32Array] {
   const Y = new Float32Array(n);
   const B = new Float32Array(n);
   for (let i = 0; i < n; i++) {
-    const r = p.r[i]!, g = p.g[i]!, b = p.b[i]!;
+    const r = p.r[i]!,
+      g = p.g[i]!,
+      b = p.b[i]!;
     // Fused multiply-adds: m0*r + (m1*g + (m2*b + bias)).
     const m0 = f(f(Math.cbrt(Math.max(0, f(M00 * r + f(M01 * g + f(M02 * b + BIAS)))))) - BIAS_CBRT);
     const m1 = f(f(Math.cbrt(Math.max(0, f(M10 * r + f(M11 * g + f(M12 * b + BIAS)))))) - BIAS_CBRT);
@@ -76,8 +84,10 @@ function toXyb(p: Planes): [Float32Array, Float32Array, Float32Array] {
 }
 
 function downscale(p: Planes): Planes {
-  const w = p.width, h = p.height;
-  const ow = Math.ceil(w / 2), oh = Math.ceil(h / 2);
+  const w = p.width,
+    h = p.height;
+  const ow = Math.ceil(w / 2),
+    oh = Math.ceil(h / 2);
   const out: Planes = {
     width: ow,
     height: oh,
@@ -86,13 +96,18 @@ function downscale(p: Planes): Planes {
     b: new Float32Array(ow * oh),
   };
   for (const c of ["r", "g", "b"] as const) {
-    const src = p[c], dst = out[c];
+    const src = p[c],
+      dst = out[c];
     for (let oy = 0; oy < oh; oy++) {
-      const y0 = 2 * oy, y1 = Math.min(2 * oy + 1, h - 1);
+      const y0 = 2 * oy,
+        y1 = Math.min(2 * oy + 1, h - 1);
       for (let ox = 0; ox < ow; ox++) {
-        const x0 = 2 * ox, x1 = Math.min(2 * ox + 1, w - 1);
+        const x0 = 2 * ox,
+          x1 = Math.min(2 * ox + 1, w - 1);
         const f = Math.fround;
-        dst[oy * ow + ox] = f(f(f(f(src[y0 * w + x0]! + src[y0 * w + x1]!) + src[y1 * w + x0]!) + src[y1 * w + x1]!) * 0.25);
+        dst[oy * ow + ox] = f(
+          f(f(f(src[y0 * w + x0]! + src[y0 * w + x1]!) + src[y1 * w + x0]!) + src[y1 * w + x1]!) * 0.25,
+        );
       }
     }
   }
@@ -159,20 +174,32 @@ function blur(src: Float32Array, width: number, height: number, tmp: Float32Arra
   // multiply-adds round once). The published scores come from f32 implementations, and
   // f32 rounding noise is part of them; f64 here scored ~0.1 high.
   const f = Math.fround;
-  const na1 = -b1, na3 = -b3, na5 = -b5;
+  const na1 = -b1,
+    na3 = -b3,
+    na5 = -b5;
 
   // Rows.
   for (let y = 0; y < height; y++) {
     const row = y * width;
-    let p1 = 0, p3 = 0, p5 = 0, q1 = 0, q3 = 0, q5 = 0;
+    let p1 = 0,
+      p3 = 0,
+      p5 = 0,
+      q1 = 0,
+      q3 = 0,
+      q5 = 0;
     for (let n = -N + 1; n < width; n++) {
-      const left = n - N - 1, right = n + N - 1;
+      const left = n - N - 1,
+        right = n + N - 1;
       const sum = f((left >= 0 ? src[row + left]! : 0) + (right < width ? src[row + right]! : 0));
       const o1 = f(na1 * p1 + f(f(sum * a1) - q1));
       const o3 = f(na3 * p3 + f(f(sum * a3) - q3));
       const o5 = f(na5 * p5 + f(f(sum * a5) - q5));
-      q1 = p1; q3 = p3; q5 = p5;
-      p1 = o1; p3 = o3; p5 = o5;
+      q1 = p1;
+      q3 = p3;
+      q5 = p5;
+      p1 = o1;
+      p3 = o3;
+      p5 = o5;
       if (n >= 0) tmp[row + n] = f(o1 + o3) + o5;
     }
   }
@@ -182,17 +209,23 @@ function blur(src: Float32Array, width: number, height: number, tmp: Float32Arra
   const P = new Float32Array(3 * width);
   const Q = new Float32Array(3 * width);
   for (let n = -N + 1; n < height; n++) {
-    const top = n - N - 1, bottom = n + N - 1;
+    const top = n - N - 1,
+      bottom = n + N - 1;
     const tRow = top >= 0 ? top * width : -1;
     const bRow = bottom < height ? bottom * width : -1;
     for (let x = 0; x < width; x++) {
       const sum = f((tRow >= 0 ? tmp[tRow + x]! : 0) + (bRow >= 0 ? tmp[bRow + x]! : 0));
-      const i3 = x + width, i5 = x + 2 * width;
+      const i3 = x + width,
+        i5 = x + 2 * width;
       const o1 = f(sum * a1 - f(P[x]! * b1 + Q[x]!));
       const o3 = f(sum * a3 - f(P[i3]! * b3 + Q[i3]!));
       const o5 = f(sum * a5 - f(P[i5]! * b5 + Q[i5]!));
-      Q[x] = P[x]!; Q[i3] = P[i3]!; Q[i5] = P[i5]!;
-      P[x] = o1; P[i3] = o3; P[i5] = o5;
+      Q[x] = P[x]!;
+      Q[i3] = P[i3]!;
+      Q[i5] = P[i5]!;
+      P[x] = o1;
+      P[i3] = o3;
+      P[i5] = o5;
       if (n >= 0) out[n * width + x] = f(o1 + o3) + o5;
     }
   }
@@ -261,16 +294,24 @@ export function score(ref: Prepared, distorted: Planes): number {
     const ss = [0, 0, 0, 0, 0, 0];
     const ed = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     for (let c = 0; c < 3; c++) {
-      const x1 = S.xyb[c]!, m1 = S.mu[c]!, s11 = S.sigmaSq[c]!;
+      const x1 = S.xyb[c]!,
+        m1 = S.mu[c]!,
+        s11 = S.sigmaSq[c]!;
       const x2 = xyb2[c]!;
       const m2 = blur(x2, width, height, tmp);
       const s22 = blur(multiply(x2, x2, mul.subarray(0, n)), width, height, tmp);
       const s12 = blur(multiply(x1, x2, mul.subarray(0, n)), width, height, tmp);
       const f = Math.fround;
-      let a = 0, a4 = 0, art = 0, art4 = 0, det = 0, det4 = 0;
+      let a = 0,
+        a4 = 0,
+        art = 0,
+        art4 = 0,
+        det = 0,
+        det4 = 0;
       for (let i = 0; i < n; i++) {
         // f32 like the reference, then f64 for the sums.
-        const mu1 = m1[i]!, mu2 = m2[i]!;
+        const mu1 = m1[i]!,
+          mu2 = m2[i]!;
         const diff = f(mu1 - mu2);
         const numM = f(1 - diff * diff);
         const numS = f(2 * f(s12[i]! - f(mu1 * mu2)) + C2);
@@ -319,25 +360,23 @@ function combine(ssim: number[][], edge: number[][]) {
   }
   s *= 0.9562382616834844;
   s = 6.248496625763138e-5 * s * s * s + 2.326765642916932 * s - 0.020884521182843837 * s * s;
-  return s > 0 ? 100 - 10 * Math.pow(s, 0.6276336467831387) : 100;
+  return s > 0 ? 100 - 10 * s ** 0.6276336467831387 : 100;
 }
 
 // 108 weights: 3 channels × 6 scales × 2 norms × (SSIM, ringing, blurring).
 const WEIGHT = [
-  0.0, 0.0007376606707406586, 0.0, 0.0, 0.0007793481682867309, 0.0, 0.0, 0.0004371155730107379, 0.0,
-  1.1041726426657346, 0.00066284834129271, 0.00015231632783718752, 0.0, 0.0016406437456599754, 0.0,
-  1.8422455520539298, 11.441172603757666, 0.0, 0.0007989109436015163, 0.000176816438078653, 0.0,
-  1.8787594979546387, 10.94906990605142, 0.0, 0.0007289346991508072, 0.9677937080626833, 0.0,
-  0.00014003424285435884, 0.9981766977854967, 0.00031949755934435053, 0.0004550992113792063, 0.0, 0.0,
-  0.0013648766163243398, 0.0, 0.0, 0.0, 0.0, 0.0, 7.466890328078848, 0.0, 17.445833984131262,
-  0.0006235601634041466, 0.0, 0.0, 6.683678146179332, 0.00037724407979611296, 1.027889937768264,
-  225.20515300849274, 0.0, 0.0, 19.213238186143016, 0.0011401524586618361, 0.001237755635509985,
-  176.39317598450694, 0.0, 0.0, 24.43300999870476, 0.28520802612117757, 0.0004485436923833408, 0.0, 0.0,
-  0.0, 34.77906344483772, 44.835625328877896, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-  0.0008680556573291698, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0005313191874358747, 0.0, 0.00016533814161379112, 0.0,
-  0.0, 0.0, 0.0, 0.0, 0.0004179171803251336, 0.0017290828234722833, 0.0, 0.0020827005846636437, 0.0, 0.0,
-  8.826982764996862, 23.19243343998926, 0.0, 95.1080498811086, 0.9863978034400682, 0.9834382792465353,
-  0.0012286405048278493, 171.2667255897307, 0.9807858872435379, 0.0, 0.0, 0.0, 0.0005130064588990679, 0.0,
-  0.00010854057858411537,
+  0.0, 0.0007376606707406586, 0.0, 0.0, 0.0007793481682867309, 0.0, 0.0, 0.0004371155730107379, 0.0, 1.1041726426657346,
+  0.00066284834129271, 0.00015231632783718752, 0.0, 0.0016406437456599754, 0.0, 1.8422455520539298, 11.441172603757666,
+  0.0, 0.0007989109436015163, 0.000176816438078653, 0.0, 1.8787594979546387, 10.94906990605142, 0.0,
+  0.0007289346991508072, 0.9677937080626833, 0.0, 0.00014003424285435884, 0.9981766977854967, 0.00031949755934435053,
+  0.0004550992113792063, 0.0, 0.0, 0.0013648766163243398, 0.0, 0.0, 0.0, 0.0, 0.0, 7.466890328078848, 0.0,
+  17.445833984131262, 0.0006235601634041466, 0.0, 0.0, 6.683678146179332, 0.00037724407979611296, 1.027889937768264,
+  225.20515300849274, 0.0, 0.0, 19.213238186143016, 0.0011401524586618361, 0.001237755635509985, 176.39317598450694,
+  0.0, 0.0, 24.43300999870476, 0.28520802612117757, 0.0004485436923833408, 0.0, 0.0, 0.0, 34.77906344483772,
+  44.835625328877896, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0008680556573291698, 0.0, 0.0, 0.0, 0.0, 0.0,
+  0.0005313191874358747, 0.0, 0.00016533814161379112, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0004179171803251336,
+  0.0017290828234722833, 0.0, 0.0020827005846636437, 0.0, 0.0, 8.826982764996862, 23.19243343998926, 0.0,
+  95.1080498811086, 0.9863978034400682, 0.9834382792465353, 0.0012286405048278493, 171.2667255897307,
+  0.9807858872435379, 0.0, 0.0, 0.0, 0.0005130064588990679, 0.0, 0.00010854057858411537,
 ];
 if (WEIGHT.length !== 108) throw new Error("weights");

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
@@ -33,7 +33,13 @@ export type Options = {
   base?: string;
   /** Images encoded at once, each in a worker thread. Default: a quarter of the cores, half with `target`. */
   concurrency?: number;
-  onImage?: (event: { file: string; done: number; total: number; status: "made" | "kept" | "failed"; error?: string }) => void;
+  onImage?: (event: {
+    file: string;
+    done: number;
+    total: number;
+    status: "made" | "kept" | "failed";
+    error?: string;
+  }) => void;
 };
 
 export type Variant = {
@@ -105,11 +111,7 @@ export function resolve(o: Options): Resolved {
   const input = path.resolve(o.input);
   const out = path.resolve(o.out);
   const dpr = o.dpr?.length ? o.dpr : [1, 2];
-  const widths = o.widths?.length
-    ? o.widths
-    : o.display
-      ? dpr.map((d) => Math.round(o.display! * d))
-      : [640, 1280];
+  const widths = o.widths?.length ? o.widths : o.display ? dpr.map((d) => Math.round(o.display! * d)) : [640, 1280];
   for (const w of widths) {
     if (!Number.isInteger(w) || w < 1) throw new Error(`Bad width: ${w}`);
   }
@@ -134,7 +136,7 @@ export function resolve(o: Options): Resolved {
 function inferBase(out: string) {
   const rel = path.relative(path.resolve("public"), out);
   if (rel.startsWith("..") || path.isAbsolute(rel)) return "";
-  return "/" + rel.split(path.sep).filter(Boolean).join("/");
+  return `/${rel.split(path.sep).filter(Boolean).join("/")}`;
 }
 
 export async function presize(options: Options): Promise<Result> {
@@ -179,9 +181,7 @@ export async function presize(options: Options): Promise<Result> {
   }
 
   // Stable key order keeps the manifest diff-friendly.
-  manifest.images = Object.fromEntries(
-    Object.entries(manifest.images).sort(([a], [b]) => (a < b ? -1 : 1)),
-  );
+  manifest.images = Object.fromEntries(Object.entries(manifest.images).sort(([a], [b]) => (a < b ? -1 : 1)));
 
   // Only files an earlier run wrote, and that this run no longer uses.
   if (previous) {
@@ -197,8 +197,8 @@ export async function presize(options: Options): Promise<Result> {
 
   await mkdir(r.out, { recursive: true });
   const target = path.join(r.out, MANIFEST);
-  await writeFile(target + ".tmp", JSON.stringify(manifest, null, 1) + "\n");
-  await rename(target + ".tmp", target);
+  await writeFile(`${target}.tmp`, `${JSON.stringify(manifest, null, 1)}\n`);
+  await rename(`${target}.tmp`, target);
   return result;
 }
 
@@ -214,7 +214,10 @@ export function srcset(entry: Entry, format?: Format) {
 }
 
 /** A <picture> as an HTML string: an AVIF <source>, and an <img> with WebP and the original. */
-export function picture(entry: Entry, attrs: { alt: string; sizes: string; loading?: "lazy" | "eager"; class?: string }) {
+export function picture(
+  entry: Entry,
+  attrs: { alt: string; sizes: string; loading?: "lazy" | "eager"; class?: string },
+) {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   const img = entry.original ?? entry.sources.webp?.at(-1) ?? entry.sources.avif?.at(-1);
   // An AVIF source without the full size would make 2x screens settle for a smaller file.
@@ -344,7 +347,10 @@ class Workers {
           off();
           rej(e);
         };
-        const off = () => (w.off("message", onMessage), w.off("error", onError));
+        const off = () => {
+          w.off("message", onMessage);
+          w.off("error", onError);
+        };
         w.on("message", onMessage);
         w.on("error", onError);
         const job: Job = { id, r, key, buf: new Uint8Array(buf.buffer, buf.byteOffset, buf.length), hash };

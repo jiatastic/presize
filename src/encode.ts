@@ -1,9 +1,9 @@
-import sharp from "sharp";
-import { rgbaToThumbHash } from "thumbhash";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { encodeAt, reference, search, type Encoded } from "./quality.ts";
+import sharp from "sharp";
+import { rgbaToThumbHash } from "thumbhash";
 import type { Entry, Format, Resolved, Variant } from "./index.ts";
+import { type Encoded, encodeAt, reference, search } from "./quality.ts";
 
 /** Formats every browser shows, so the source itself can be served. */
 const WEB_SAFE = /\.(jpe?g|png|gif|webp)$/i;
@@ -71,7 +71,9 @@ export async function encode(r: Resolved, key: string, buf: Buffer, h: string): 
         quality: enc.quality,
       };
       if (enc.score !== undefined) v.score = Math.round(enc.score * 100) / 100;
-      (entry.sources[format] ??= []).push(v);
+      const list = entry.sources[format] ?? [];
+      list.push(v);
+      entry.sources[format] = list;
     }
   }
   if (keepOriginal) {

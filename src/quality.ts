@@ -1,7 +1,7 @@
 import sharp from "sharp";
-import { planesOf } from "./pixels.ts";
-import { prepare, score, type Prepared } from "./ssimulacra2.ts";
 import type { Format } from "./index.ts";
+import { planesOf } from "./pixels.ts";
+import { type Prepared, prepare, score } from "./ssimulacra2.ts";
 
 /** Quality settings tried by the search, per format. Outside these the search gives up. */
 export const RANGE: Record<Format, [number, number]> = { avif: [10, 90], webp: [20, 95] };

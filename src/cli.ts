@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
-import { presize, resolve, type Format, type Manifest } from "./index.ts";
+import { type Format, type Manifest, presize, resolve } from "./index.ts";
 
 const HELP = `presize <input> --out <dir> [options]
 
@@ -76,7 +76,8 @@ try {
   fail(e instanceof Error ? e.message : String(e));
 }
 if (!values.quiet) {
-  const q = r.target !== undefined ? `target score ${r.target}` : r.formats.map((f) => `${f} q${r.quality[f]}`).join(", ");
+  const q =
+    r.target !== undefined ? `target score ${r.target}` : r.formats.map((f) => `${f} q${r.quality[f]}`).join(", ");
   console.log(`widths ${r.widths.join(", ")} · ${r.formats.join(" + ")} · ${q} · base "${r.base || "(none)"}"`);
 }
 
@@ -90,7 +91,7 @@ const result = await presize({
     }
   },
 });
-if (process.stdout.isTTY && !values.quiet) process.stdout.write("\r" + " ".repeat(80) + "\r");
+if (process.stdout.isTTY && !values.quiet) process.stdout.write(`\r${" ".repeat(80)}\r`);
 
 summary(result.manifest, r.formats);
 console.log(

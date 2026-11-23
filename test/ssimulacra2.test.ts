@@ -1,11 +1,11 @@
-import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { prepare, score, ssimulacra2 } from "../src/ssimulacra2.ts";
 import { planesOf } from "../src/pixels.ts";
+import { prepare, score, ssimulacra2 } from "../src/ssimulacra2.ts";
 
 const fixture = (f: string) => fileURLToPath(new URL(`./fixtures/${f}`, import.meta.url));
 
@@ -13,7 +13,9 @@ const fixture = (f: string) => fileURLToPath(new URL(`./fixtures/${f}`, import.m
 // from rust-av/ssimulacra2 (ssimulacra2/test_data) and set PRESIZE_TANK to their folder.
 const TANK = process.env.PRESIZE_TANK;
 
-test("matches the Rust crate on its reference pair", { skip: !TANK || !existsSync(path.join(TANK, "tank_source.png")) }, async () => {
+test("matches the Rust crate on its reference pair", {
+  skip: !TANK || !existsSync(path.join(TANK, "tank_source.png")),
+}, async () => {
   // The crate expects 17.398505 and allows 0.25 (its CI wobbles). The distorted file carries
   // a non-sRGB profile that the crate ignores, so this reads it the same way.
   const s = ssimulacra2(
@@ -39,7 +41,13 @@ test("more compression scores lower", async () => {
   const src = await sharp({
     create: { width: 96, height: 96, channels: 3, background: "#fff" },
   })
-    .composite([{ input: Buffer.from('<svg width="96" height="96"><text x="4" y="40" font-size="22">Hello</text><circle cx="60" cy="70" r="18" fill="#c33"/></svg>') }])
+    .composite([
+      {
+        input: Buffer.from(
+          '<svg width="96" height="96"><text x="4" y="40" font-size="22">Hello</text><circle cx="60" cy="70" r="18" fill="#c33"/></svg>',
+        ),
+      },
+    ])
     .png()
     .toBuffer();
   const ref = prepare(await planesOf(src));
