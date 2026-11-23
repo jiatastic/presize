@@ -1,0 +1,14 @@
+.github/workflows/ci.yml
+  h_5a78554a0547d4 1-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "64b1b1fd9558b5985aa6dc22eacd48b23da4d24a",
+  "prompts": {},
+  "humans": {
+    "h_5a78554a0547d4": {
+      "author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
