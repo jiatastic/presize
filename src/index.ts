@@ -185,9 +185,9 @@ export async function presize(options: Options): Promise<Result> {
 
   // Only files an earlier run wrote, and that this run no longer uses.
   if (previous) {
-    const live = new Set(Object.values(manifest.images).flatMap((e) => files_(e)));
+    const live = new Set(Object.values(manifest.images).flatMap((e) => outputFiles(e)));
     for (const e of Object.values(previous.images)) {
-      for (const rel of files_(e)) {
+      for (const rel of outputFiles(e)) {
         if (live.has(rel)) continue;
         await rm(path.join(r.out, rel), { force: true });
         result.removed++;
@@ -265,7 +265,7 @@ async function pool<T>(items: T[], n: number, run: (item: T) => Promise<void>) {
 }
 
 /** Output paths of an entry, relative to the out folder. */
-function files_(e: Entry): string[] {
+function outputFiles(e: Entry): string[] {
   return [
     ...Object.values(e.sources).flatMap((list) => (list ?? []).map((v) => v.file)),
     ...(e.original ? [e.original.file] : []),
@@ -273,7 +273,7 @@ function files_(e: Entry): string[] {
 }
 
 async function allExist(r: Resolved, e: Entry) {
-  for (const rel of files_(e)) {
+  for (const rel of outputFiles(e)) {
     try {
       await stat(path.join(r.out, rel));
     } catch {
