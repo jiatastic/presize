@@ -1,0 +1,47 @@
+src/cli.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 3,79-80
+  s_cb0e8543114bf5::t_764a8377153d36 94
+biome.json
+  s_cb0e8543114bf5::t_3fc45b7f64c4e6 1-5,7-8
+  s_cb0e8543114bf5::t_764a8377153d36 6
+src/ssimulacra2.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 26,51-59,70-72,87-90,99-100,102-103,105-106,108-110,177-179,184-189,191-192,197-202,212-213,218-219,223-228,297-299,305-310,313-314,363,368-380
+test/ssimulacra2.test.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 4,8,16-18,44-50
+src/encode.ts
+  s_cb0e8543114bf5::t_2129f544f2c99c 74-76
+  s_cb0e8543114bf5::t_da632cbc92d2ee 3-4,6
+package.json
+  s_cb0e8543114bf5::t_6af262546fc913 34
+bench/equal-quality.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 5,13-18,26-29,51-56,67-73
+  s_cb0e8543114bf5::t_764a8377153d36 77
+src/quality.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 3-4
+test/quality.test.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 2,5,7-8,13-15,38-42,52-64,74-79
+src/index.ts
+  s_cb0e8543114bf5::t_764a8377153d36 139,200-201
+  s_cb0e8543114bf5::t_2129f544f2c99c 350-353
+  s_cb0e8543114bf5::t_da632cbc92d2ee 2,36-42,114,184,217-220
+bench/report.ts
+  s_cb0e8543114bf5::t_da632cbc92d2ee 15-16,22-27,34-40,52-64,69-70
+pnpm-lock.yaml
+  s_cb0e8543114bf5::t_f352115bcec7d5 18-20,30-94,281-323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "e12c942486f4a7ae7d93741217199fe8235fe53b",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
