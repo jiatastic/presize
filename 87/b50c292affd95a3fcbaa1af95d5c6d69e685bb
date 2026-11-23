@@ -1,0 +1,26 @@
+bench/report.ts
+  s_cb0e8543114bf5::t_ea5ff816df5736 1-45
+  s_cb0e8543114bf5::t_2eafb60ff27bd1 46-47
+README.md
+  s_cb0e8543114bf5::t_c09013d77892ba 1-7,11-30,33,35-44,65-79,109-116,119
+  s_cb0e8543114bf5::t_5985158c167fd0 8-10,31-32,34,45-64,80-82,117-118
+  s_cb0e8543114bf5::t_78acc452be3dcc 83-108
+bench/equal-quality.ts
+  s_cb0e8543114bf5::t_69f40c0b51b397 1-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "87b50c292affd95a3fcbaa1af95d5c6d69e685bb",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
