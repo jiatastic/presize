@@ -1,0 +1,29 @@
+examples/node/build.mjs
+  s_cb0e8543114bf5::t_76e86d6a7247fa 1-21
+examples/astro/src/components/Presized.astro
+  s_cb0e8543114bf5::t_76e86d6a7247fa 1-37
+examples/README.md
+  s_cb0e8543114bf5::t_76e86d6a7247fa 1-38
+biome.json
+  s_cb0e8543114bf5::t_76e86d6a7247fa 3-37
+examples/next/components/PresizedImage.tsx
+  s_cb0e8543114bf5::t_76e86d6a7247fa 1-39
+examples/next/lib/images.ts
+  s_cb0e8543114bf5::t_76e86d6a7247fa 1-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "4b371545323aa0b01ad578921385bfa5a728fe4d",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
