@@ -57,10 +57,16 @@ export type PictureSources = {
  * kept original, which every browser can show.
  */
 export function srcset(entry: Entry, format?: Format) {
-  const list = format
-    ? (entry.sources[format] ?? [])
-    : [...(entry.sources.webp ?? []), ...(entry.original ? [entry.original] : [])];
-  return list.map((v) => `${v.src} ${v.width}w`).join(", ");
+  if (format) return list(entry.sources[format] ?? []);
+  const webp = entry.sources.webp ?? [];
+  // The original fills in the full width when WebP couldn't beat it. When WebP did, both are
+  // the same width, and a srcset can't list one width twice.
+  const original = entry.original && !webp.some((v) => v.width === entry.original?.width) ? [entry.original] : [];
+  return list([...webp, ...original]);
+}
+
+function list(variants: Variant[]) {
+  return variants.map((v) => `${v.src} ${v.width}w`).join(", ");
 }
 
 export function pictureSources(entry: Entry): PictureSources {

@@ -41,3 +41,17 @@ test("pictureSources offers AVIF only when it has the full size", () => {
   assert.equal(p.src, "/img/a.640.png");
   assert.match(picture(kept, { alt: 'a "b"', sizes: "320px" }), /alt="a &quot;b&quot;"/);
 });
+
+test("srcset never lists a width twice", () => {
+  // AVIF came out bigger than the source, so it was kept; WebP came out smaller.
+  const e: Entry = {
+    width: 64,
+    height: 32,
+    bytes: 9,
+    hash: "h",
+    thumbhash: "t",
+    sources: { webp: [v(64, "webp")] },
+    original: v(64, "png"),
+  };
+  assert.equal(pictureSources(e).srcset, "/img/a.64.webp 64w");
+});
