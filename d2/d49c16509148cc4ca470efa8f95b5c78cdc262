@@ -1,0 +1,36 @@
+THIRD_PARTY.md
+  s_cb0e8543114bf5::t_4e736ef459f20c 1-65
+test/ssimulacra2.test.ts
+  s_cb0e8543114bf5::t_b4bf7e7150665f 1-2,5-11,24-25,29,31-54
+  s_cb0e8543114bf5::t_8d14fb63c5bea2 3-4,12-23,26-28,30
+src/ssimulacra2.ts
+  s_cb0e8543114bf5::t_b268ee3d071abe 17
+  s_cb0e8543114bf5::t_8fc55016409d12 227-228
+  s_cb0e8543114bf5::t_36b1e850b0b2b9 49-55,58,65-73
+  s_cb0e8543114bf5::t_37d420a0a0b866 229-230
+  s_cb0e8543114bf5::t_ca0f33b7ff8c37 158-163,170-173,176,182-183,189,191-193,196
+  s_cb0e8543114bf5::t_d2eaa6ee2c0960 1-16,18-48,56-57,59-64,74-93,96-157,164-169,174-175,177-181,184-188,190,194-195,197-226,231-268,270-271,273,279-280,282-343
+  s_cb0e8543114bf5::t_59661ec13fda35 269,272,274-278,281
+  s_cb0e8543114bf5::t_1b66059d0cf632 94-95
+src/pixels.ts
+  s_cb0e8543114bf5::t_f677584a15f573 7-14,16-24
+  s_cb0e8543114bf5::t_4935a3b27afc44 1-3,6,15,33-34
+  s_cb0e8543114bf5::t_0752aaee29d40a 4-5
+  s_cb0e8543114bf5::t_00c935576051dc 25-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "d2d49c16509148cc4ca470efa8f95b5c78cdc262",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
