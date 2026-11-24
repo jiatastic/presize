@@ -1,0 +1,22 @@
+test/next.test.ts
+  s_cb0e8543114bf5::t_65833d2824591e 51-55
+  s_cb0e8543114bf5::t_ca7df63ab0f908 5
+src/next.ts
+  s_cb0e8543114bf5::t_483989c2fc5eef 184-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "cc1e80b9c6921b49e86868b7c53d4c3304cb5116",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
