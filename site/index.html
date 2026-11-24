@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>presize — build-time AVIF and WebP for Next.js and static sites</title>
+<meta name="description" content="Open-source build-time image optimization for Node.js and Next.js: AVIF and WebP at the widths you display, each at the lowest quality that still looks right.">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#ffffff">
+<link rel="canonical" href="https://jiatastic.github.io/presize/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="alternate" type="text/markdown" href="llms.txt" title="presize for LLMs">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="presize">
+<meta property="og:url" content="https://jiatastic.github.io/presize/">
+<meta property="og:title" content="presize — image optimization that looks before it compresses">
+<meta property="og:description" content="Build-time AVIF and WebP at the widths you display, with per-image quality picked by SSIMULACRA2. 22–41% smaller than one fixed quality. Works with next/image.">
+<meta property="og:image" content="https://jiatastic.github.io/presize/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="presize: one command at build time, each image at the lowest quality that still looks right">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@jiatastic520">
+<link rel="preload" href="fonts/DepartureMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://jiatastic.github.io/presize/#software",
+      "name": "presize",
+      "description": "Build-time image optimization for Node.js: AVIF and WebP at the widths you display, with the lowest quality per image that reaches a SSIMULACRA2 target. Includes a next/image loader (presize/next).",
+      "url": "https://jiatastic.github.io/presize/",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS, Linux, Windows",
+      "softwareVersion": "0.1.0",
+      "softwareRequirements": "Node.js 20.9 or later",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "downloadUrl": "https://www.npmjs.com/package/presize",
+      "sameAs": ["https://github.com/jiatastic/presize", "https://www.npmjs.com/package/presize"],
+      "author": { "@type": "Person", "name": "jiatastic520", "url": "https://x.com/jiatastic520" }
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "presize",
+      "codeRepository": "https://github.com/jiatastic/presize",
+      "programmingLanguage": "TypeScript",
+      "runtimePlatform": "Node.js",
+      "license": "https://opensource.org/licenses/MIT",
+      "targetProduct": { "@id": "https://jiatastic.github.io/presize/#software" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "How is presize different from sharp?",
+          "acceptedAnswer": { "@type": "Answer", "text": "sharp is the encoder; presize uses it. presize decides what to encode: the widths you display, and for each image and width the lowest quality whose SSIMULACRA2 score reaches your target. It also writes a manifest with srcset data and a ThumbHash placeholder, and skips images that haven't changed." } },
+        { "@type": "Question", "name": "How is presize different from Vercel Image Optimization and the default next/image loader?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Those resize images when they are first requested, on a server, with a monthly quota or a per-image bill. presize makes the files once during next build and next/image serves them as static files, so there is nothing to bill or run out of, and it works with output: \"export\"." } },
+        { "@type": "Question", "name": "How is presize different from imagemin, vite-imagetools or next-image-export-optimizer?",
+          "acceptedAnswer": { "@type": "Answer", "text": "They encode every image at one quality setting. presize measures each encode with SSIMULACRA2 and keeps the smallest file that reaches the score you ask for. On 155 real images that took 22–41% fewer bytes than the one setting that brings 95% of them to the same score." } },
+        { "@type": "Question", "name": "Does presize support AVIF?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. The CLI and API write AVIF and WebP, and presize/manifest builds a <picture> with an AVIF source. The Next.js loader serves WebP only, because a loader returns one URL per width." } },
+        { "@type": "Question", "name": "How long does presize take?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The quality search costs about 1.4 seconds per AVIF and 0.7 seconds per WebP on one laptop core, once per image and width. Later runs only encode new or changed images, and in CI the Next.js integration keeps its output in .next/cache." } },
+        { "@type": "Question", "name": "Where can I host the images presize makes?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Anywhere that serves static files: Vercel, Netlify, Cloudflare Pages, GitHub Pages, S3 or your own server. No image server is needed." } }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+  /* Departure Mono by Helena Zhang, SIL OFL 1.1 (fonts/DepartureMono-LICENSE.txt). */
+  @font-face { font-family: "Departure Mono"; src: url("fonts/DepartureMono-Regular.woff2") format("woff2"); font-display: swap; }
+  :root {
+    --ink: #282828;
+    --muted: #6b6b6b;
+    --faint: #a3a3a3;
+    --line: #e6e6e6;
+    --wash: #f6f6f4;
+    --bg: #fff;
+    --mono: "Departure Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.6 var(--mono);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a:hover { text-decoration-color: var(--ink); }
+  ::selection { background: var(--ink); color: var(--bg); }
+
+  main { max-width: 696px; margin: 0; padding: 56px 56px 40px; }
+
+  .wordmark {
+    margin: 0 0 10px;
+    font: 400 22px/1 var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+  .pill {
+    margin: 0 0 40px;
+    font: 12.5px/1.6 var(--mono); color: var(--faint);
+  }
+  .pill a { color: inherit; }
+  .wordmark .sub { display: block; margin-top: 12px; font: 14px/1.5 var(--mono); letter-spacing: 0; color: var(--muted); }
+  h3 { margin: 28px 0 8px; font: inherit; color: var(--ink); }
+  h2[id], h3[id] { scroll-margin-top: 24px; }
+  .lede { margin: 0 0 22px; }
+  p { margin: 0 0 22px; }
+  em { font-style: normal; }
+
+  h2 {
+    margin: 72px 0 20px;
+    font: 400 13px/1 var(--mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  code, pre, .num { font-family: var(--mono); }
+  code { font-size: 1em; }
+  pre {
+    margin: 0 0 22px; padding: 18px 20px;
+    background: var(--wash); border-radius: 4px;
+    font-size: 13px; line-height: 1.6;
+    overflow-x: auto;
+  }
+  pre .c { color: var(--faint); }
+  pre .p { color: var(--faint); user-select: none; }
+  .out { background: none; padding: 0 0 0 20px; border-left: 1px solid var(--line); border-radius: 0; color: var(--muted); }
+
+  .cap {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 0 0 8px; font: 12.5px/1 var(--mono); color: var(--faint);
+  }
+  .cap button {
+    font: inherit; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer;
+    text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px;
+  }
+  .cap button:hover { color: var(--ink); text-decoration-color: var(--ink); }
+
+  dl { margin: 0 0 22px; }
+  dl div { display: grid; grid-template-columns: 56px 1fr; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+  dl div:last-child { border-bottom: 1px solid var(--line); }
+  dt { font: inherit; }
+  dd { margin: 0; }
+  dd span { color: var(--muted); }
+
+  /* Benchmark: two hairlines per row, fixed quality vs presize --target. */
+  .bench { --s: 70%; display: block; width: 100%; margin: 0 0 18px; border-collapse: collapse; font: 13px/1 var(--mono); }
+  .bench tbody { display: block; }
+  .bench tr { display: grid; grid-template-columns: 92px 1fr; gap: 9px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
+  .bench tr:last-child { border-bottom: 1px solid var(--line); }
+  .bench th { grid-row: 1 / span 2; font-weight: 400; text-align: left; }
+  .bar { display: flex; align-items: center; gap: 10px; padding: 0; white-space: nowrap; color: var(--muted); }
+  .sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .bar i { display: block; height: 3px; background: var(--line); flex: none; }
+  .bar.t { color: var(--ink); }
+  .bar.t i { background: var(--ink); }
+  .key { display: flex; gap: 22px; font: 12.5px/1 var(--mono); color: var(--muted); margin: 8px 0 6px; }
+  .key span::before { content: ""; display: inline-block; width: 16px; height: 3px; margin-right: 8px; vertical-align: middle; background: var(--line); }
+  .key span.t::before { background: var(--ink); }
+  .note { font-size: 13px; color: var(--muted); }
+
+  /* Hero command: types itself out; the target number is a button. */
+  .run { margin: 0 0 44px; }
+  .cmd { margin: 0 0 12px; padding: 18px 20px; font-size: 13px; white-space: pre-wrap; }
+  .cmd .tg {
+    font: inherit; color: var(--bg); background: var(--ink); border: 0; padding: 0 5px; margin: 0;
+    cursor: pointer; border-radius: 2px;
+  }
+  .cmd .tg:hover { background: #000; }
+  .cmd .tg[hidden] { display: none; }
+  .cursor { display: inline-block; width: .6em; height: 1.15em; margin-left: 3px; vertical-align: text-bottom; background: var(--ink); animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .run-note { margin: 0; font: 12.5px/1.6 var(--mono); color: var(--muted); min-height: 1.6em; }
+  .run-note span { color: var(--ink); margin-right: 8px; }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+
+  /* Demo: presize's real quality search on three images, replayed. */
+  .demo { margin: 0 0 52px; font: 12.5px/1.6 var(--mono); }
+  .demo .cap { flex-wrap: wrap; gap: 8px 16px; }
+  .demo .file { color: var(--muted); }
+  .tabs { display: flex; gap: 14px; }
+  .tabs button {
+    font: inherit; color: var(--faint); background: none; border: 0; padding: 0; cursor: pointer;
+    text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px;
+  }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button[aria-pressed="true"] { color: var(--ink); text-decoration-color: var(--ink); }
+  .frame { position: relative; aspect-ratio: 3 / 2; background: var(--wash); overflow: hidden; user-select: none; }
+  .frame img, .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+  .frame .err { clip-path: inset(0 0 100% 0); transition: opacity .25s; }
+  .frame .ref { clip-path: inset(0 calc(100% - var(--x, 50%)) 0 0); visibility: hidden; }
+  .frame .scan { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--ink); box-shadow: 0 0 0 .5px rgba(255,255,255,.6); visibility: hidden; }
+  .frame .split { position: absolute; top: 0; bottom: 0; left: var(--x, 50%); width: 1px; background: #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.25); visibility: hidden; }
+  .frame .tag {
+    position: absolute; top: 10px; padding: 3px 7px; background: rgba(255,255,255,.88); color: var(--ink);
+    font: 11.5px/1.3 var(--mono); white-space: nowrap; transition: opacity .2s;
+  }
+  .frame .tl { left: 10px; } .frame .tr { right: 10px; }
+  .frame input {
+    position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0;
+    cursor: ew-resize; touch-action: pan-y; display: none;
+  }
+  .frame.compare .ref, .frame.compare .split { visibility: visible; }
+  .frame.compare input { display: block; }
+  .frame.compare .hint { opacity: 1; }
+  .frame .hint { top: auto; bottom: 10px; left: 50%; transform: translateX(-50%); opacity: 0; pointer-events: none; }
+
+  /* Quality axis: the bracket the bisection narrows, a square per try. */
+  .track { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 18px 0 6px; color: var(--faint); }
+  .axis { position: relative; height: 13px; }
+  .axis::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--line); }
+  .axis .br { position: absolute; top: 5px; height: 3px; background: var(--line); transition: left .35s, width .35s; }
+  .axis .t { position: absolute; top: 3px; width: 7px; height: 7px; margin-left: -3.5px; border: 1px solid var(--ink); background: var(--bg); }
+  .axis .t.ok { background: var(--ink); }
+  .axis .t.now { outline: 1px solid var(--ink); outline-offset: 2px; }
+  .log { margin: 10px 0 0; min-height: calc(9 * 1.6em); color: var(--muted); }
+  .log div { display: grid; grid-template-columns: 7ch 12ch 13ch 1fr; white-space: pre; }
+  .log .ok { color: var(--ink); }
+  .log .keep { display: block; margin-top: 6px; color: var(--ink); }
+  .credit { margin-top: 8px; color: var(--faint); font-size: 11.5px; }
+  .credit a { color: var(--faint); }
+
+  /* On-page nav, pinned to the far right on wide screens. */
+  .toc { position: fixed; top: 56px; right: 56px; width: 176px; font: 12.5px/1.6 var(--mono); }
+  .toc p { margin: 0 0 12px; color: var(--faint); }
+  .toc ol, .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  .toc a { display: flex; align-items: center; gap: 10px; color: var(--faint); text-decoration: none; transition: color .15s; }
+  .toc ol a::before {
+    content: ""; flex: none; width: 14px; height: 1px; background: currentColor;
+    transform: scaleX(.5); transform-origin: left; transition: transform .2s;
+  }
+  .toc a:hover, .toc a[aria-current="true"] { color: var(--ink); }
+  .toc a[aria-current="true"]::before { transform: none; }
+  .toc ul { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--line); }
+  @media (max-width: 1000px) { .toc { display: none; } }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+  footer {
+    max-width: 696px; margin: 0; padding: 56px 56px 64px;
+    font: 13px/1.6 var(--mono); color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 6px 18px;
+  }
+  footer a { color: var(--muted); }
+
+  @media (max-width: 560px) {
+    body { font-size: 13.5px; }
+    main { padding: 32px 24px 40px; }
+    footer { padding: 48px 24px 56px; }
+    .bench tr { grid-template-columns: 1fr; gap: 10px; }
+    .bench th { grid-row: auto; }
+    .bench { --s: 50%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc" aria-label="On this page">
+  <p>On this page</p>
+  <ol>
+    <li><a href="#start">Start</a></li>
+    <li><a href="#nextjs">Next.js</a></li>
+    <li><a href="#target">Choosing a target</a></li>
+    <li><a href="#benchmark">Benchmark</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#limits">When not to use it</a></li>
+    <li><a href="#faq">Questions</a></li>
+  </ol>
+  <ul>
+    <li><a href="https://github.com/jiatastic/presize">GitHub ↗</a></li>
+    <li><a href="https://www.npmjs.com/package/presize">npm ↗</a></li>
+  </ul>
+</nav>
+
+<main>
+  <h1 class="wordmark">presize<span class="sub">Build-time image optimization for Next.js and static sites</span></h1>
+  <p class="pill"><a href="https://www.npmjs.com/package/presize">v0.1.0 on npm</a> · Node.js 20.9 or later · MIT</p>
+
+  <div class="run" id="run">
+    <div class="cap"><span>one command, at build time</span><button type="button" id="run-copy" data-copy="npx presize images --out public/img --display 400 --target 80">copy</button></div>
+    <pre class="cmd"><span class="p">$ </span><span id="run-text">npx presize images --out public/img --display 400 --target</span> <button type="button" class="tg" id="run-tg" aria-label="Target score, click to change">80</button><i class="cursor" aria-hidden="true"></i></pre>
+    <p class="run-note" id="run-note"><span>target 80</span>very high quality, for most sites. Click 80 to change it.</p>
+  </div>
+
+  <figure class="demo" id="demo" style="margin:0 0 52px">
+    <div class="cap">
+      <span class="file" id="demo-file">&nbsp;</span>
+      <span class="tabs" id="demo-tabs"></span>
+    </div>
+    <div class="frame" id="demo-frame">
+      <img class="try" alt="">
+      <canvas class="err" aria-hidden="true"></canvas>
+      <img class="ref" alt="">
+      <i class="scan"></i><i class="split"></i>
+      <span class="tag tl" id="demo-q"></span>
+      <span class="tag tr" id="demo-score"></span>
+      <span class="tag hint">← drag →</span>
+      <input type="range" min="0" max="100" value="50" aria-label="Compare with the source">
+    </div>
+    <div class="track"><span>q 20</span><div class="axis" id="demo-axis"><i class="br"></i></div><span>95</span></div>
+    <div class="log" id="demo-log" aria-live="polite"></div>
+    <figcaption class="credit">WebP at 584 px, target score 80. Each try is scored with SSIMULACRA2; the dark
+    specks while it scans are where the try differs from the source, amplified. Photos by
+    <a href="https://unsplash.com/photos/OJJIaFZOeX4">veeterzy</a> and
+    <a href="https://unsplash.com/photos/wpTWYBll4_w">Marat Gilyadzinov</a> on Unsplash.</figcaption>
+  </figure>
+
+  <p class="lede">Image optimization that looks at each image before deciding how hard to compress it.</p>
+
+  <p>presize turns a folder of images into AVIF and WebP files at the widths you actually show
+  them, and writes a small manifest with <code>srcset</code> data and a blurred placeholder for
+  each one. It runs once, at build time. You serve the files from any static host, with no image
+  server and no per-image bill.</p>
+
+  <p>Most tools give every image the same quality setting. presize scores each encode with
+  <a href="https://github.com/cloudinary/ssimulacra2">SSIMULACRA2</a>, a measure of how
+  different two images look to a person, and keeps the smallest file that reaches the score you
+  ask for. A flat logo gets a low setting, a busy photograph a high one, and both end up looking
+  the same amount of right.</p>
+
+  <h2 id="start">Start</h2>
+
+  <pre><span class="p">$ </span>npm install -D presize</pre>
+
+  <p>The command at the top, run on a folder of 22 images, prints:</p>
+  <pre class="out">widths 400, 800 · avif + webp · target score 80
+22 images, 2.3 MiB as sources
+  avif  400w 250 KiB  800w 563 KiB  · median q62, score 80.4
+  webp  400w 345 KiB  800w 928 KiB  · median q84, score 80.4
+22 made, 0 unchanged, 0 failed · 29.2s</pre>
+
+  <p><code>--display 400</code> is the width the images appear at on the page; presize makes
+  files for normal and 2× screens. <code>--target 80</code> is the score every file must reach.
+  Run it again and only new or changed images are encoded.</p>
+
+  <p>Then build a <code>&lt;picture&gt;</code> from the manifest, wherever your pages render:</p>
+
+<pre><span class="c">import</span> { picture } <span class="c">from</span> "presize/manifest";
+<span class="c">import</span> data <span class="c">from</span> "./public/img/presize.json";
+
+picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
+
+  <p><code>presize/manifest</code> has no dependencies, so the encoder never loads where your
+  site runs. There are examples for <a href="https://github.com/jiatastic/presize/tree/main/examples">Next.js, Astro and plain Node</a>.</p>
+
+  <h2 id="nextjs">Next.js</h2>
+
+  <p>Wrap your config, and <code>next/image</code> serves presized WebP from <code>public/</code>.
+  Nothing is resized when a page is requested, so there's no Vercel image optimization quota or
+  bill, and it works with <code>output: "export"</code>.</p>
+
+<pre><span class="c">// next.config.ts</span>
+<span class="c">import</span> { withPresize } <span class="c">from</span> "presize/next";
+
+<span class="c">export default</span> withPresize({ <span class="c">/* your config */</span> });</pre>
+
+  <p><code>next build</code> encodes <code>public/</code> into <code>public/_presize</code>, only new
+  or changed images, and each width <code>next/image</code> asks for gets the smallest copy at
+  least that wide. Copies are cached for a year, since their names carry a content hash. In CI
+  the output is kept in <code>.next/cache</code>. Static imports and remote URLs load as they are;
+  for AVIF, use <code>presize/manifest</code> and a <code>&lt;picture&gt;</code>.</p>
+
+  <h2 id="target">Choosing a target</h2>
+
+  <dl>
+    <div><dt>90</dt><dd>Visually lossless at a normal distance. <span>Photography, hero images.</span></dd></div>
+    <div><dt>80</dt><dd>Very high quality. <span>Most sites.</span></dd></div>
+    <div><dt>70</dt><dd>High quality; you'd see artifacts if you looked for them. <span>Thumbnails, dense grids.</span></dd></div>
+  </dl>
+
+  <h2 id="benchmark">Benchmark</h2>
+
+  <p>155 real email images at 640 pixels wide: product photos, banners and logos. To get
+  <em>every</em> image to the same score with one setting, you have to pick the setting the
+  hardest image needs. presize gives each image only what it needs.</p>
+
+  <div class="key" aria-hidden="true"><span>one fixed quality</span><span class="t">presize --target</span></div>
+  <table class="bench">
+    <caption class="sr">Bytes needed to bring all 155 images to the same SSIMULACRA2 score</caption>
+    <thead class="sr"><tr><th scope="col">Format and score</th><th scope="col">One fixed quality</th><th scope="col">presize --target</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">AVIF ≥ 70</th><td class="bar"><i style="width:calc(1682/3378*var(--s))"></i>1682 KiB · q60</td><td class="bar t"><i style="width:calc(1110/3378*var(--s))"></i>1110 KiB · −34%</td></tr>
+      <tr><th scope="row">AVIF ≥ 80</th><td class="bar"><i style="width:calc(2191/3378*var(--s))"></i>2191 KiB · q70</td><td class="bar t"><i style="width:calc(1700/3378*var(--s))"></i>1700 KiB · −22%</td></tr>
+      <tr><th scope="row">WebP ≥ 70</th><td class="bar"><i style="width:calc(2647/3378*var(--s))"></i>2647 KiB · q85</td><td class="bar t"><i style="width:calc(1562/3378*var(--s))"></i>1562 KiB · −41%</td></tr>
+      <tr><th scope="row">WebP ≥ 80</th><td class="bar"><i style="width:calc(3378/3378*var(--s))"></i>3378 KiB · q90</td><td class="bar t"><i style="width:calc(2379/3378*var(--s))"></i>2379 KiB · −30%</td></tr>
+    </tbody>
+  </table>
+  <p class="note">The fixed setting is the lowest that brings 95% of images to the score;
+  presize brings all of them. The search costs about 1.4 s per AVIF and 0.7 s per WebP on one
+  laptop core, once per image.</p>
+
+  <h2 id="how">How it works</h2>
+
+  <p>For each width, presize resizes the image once and keeps those pixels as the reference.
+  It then finds the lowest quality that reaches the target by bisection, about seven encodes,
+  each scored against the reference, so the score judges the compression and not the resize.
+  Transparent images are scored over white and over black, and the worse score counts.</p>
+
+  <p>Encoding is done by <a href="https://sharp.pixelplumbing.com">sharp</a>. SSIMULACRA2 is
+  plain TypeScript, ported from the <a href="https://github.com/rust-av/ssimulacra2">rust-av
+  crate</a>; on the crate's reference pair the two scores differ by 0.0002.</p>
+
+  <h2 id="limits">When not to use it</h2>
+
+  <p>Images that only exist at runtime, like uploads or remote URLs, need an on-request
+  optimizer such as imgproxy or your CDN's image service. presize is for the images you have
+  when you build.</p>
+
+  <h2 id="faq">Questions</h2>
+
+  <h3>How is presize different from sharp?</h3>
+  <p>sharp is the encoder; presize uses it. presize decides what to encode: the widths you
+  display, and for each image and width the lowest quality whose SSIMULACRA2 score reaches your
+  target. It also writes a manifest with <code>srcset</code> data and a ThumbHash placeholder,
+  and skips images that haven't changed.</p>
+
+  <h3>How is it different from Vercel Image Optimization and the default next/image loader?</h3>
+  <p>Those resize images when they are first requested, on a server, with a monthly quota or a
+  per-image bill. presize makes the files once during <code>next build</code> and
+  <code>next/image</code> serves them as static files, so there is nothing to bill or run out
+  of, and it works with <code>output: "export"</code>.</p>
+
+  <h3>How is it different from imagemin, vite-imagetools or next-image-export-optimizer?</h3>
+  <p>They encode every image at one quality setting. presize measures each encode and keeps the
+  smallest file that reaches the score you ask for. On the 155 images above that took 22–41%
+  fewer bytes than the one setting that brings 95% of them to the same score.</p>
+
+  <h3>Does it support AVIF?</h3>
+  <p>Yes. The CLI and API write AVIF and WebP, and <code>presize/manifest</code> builds a
+  <code>&lt;picture&gt;</code> with an AVIF source. The Next.js loader serves WebP only, because a
+  loader returns one URL per width.</p>
+
+  <h3>How long does it take?</h3>
+  <p>About 1.4 s per AVIF and 0.7 s per WebP on one laptop core, once per image and width. Later
+  runs only encode new or changed images, and in CI the Next.js integration keeps its output in
+  <code>.next/cache</code>.</p>
+
+  <h3>Where can I host the images?</h3>
+  <p>Anywhere that serves static files: Vercel, Netlify, Cloudflare Pages, GitHub Pages, S3 or
+  your own server. No image server is needed.</p>
+</main>
+
+<footer>
+  <span>presize</span>
+  <a href="https://github.com/jiatastic/presize">GitHub</a>
+  <a href="https://www.npmjs.com/package/presize">npm</a>
+  <a href="https://github.com/jiatastic/presize/blob/main/CHANGELOG.md">Changelog</a>
+  <a href="llms.txt">llms.txt</a>
+  <a href="https://github.com/jiatastic/presize/blob/main/LICENSE">MIT license</a>
+  <span>by <a href="https://x.com/jiatastic520">@jiatastic520</a></span>
+</footer>
+
+<script>
+  for (const b of document.querySelectorAll("[data-copy]")) {
+    b.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(b.dataset.copy);
+      b.textContent = "copied";
+      setTimeout(() => (b.textContent = "copy"), 1400);
+    });
+  }
+
+  // Hero command: type it out once, then let the target number cycle 70 / 80 / 90.
+  {
+    const text = document.getElementById("run-text"), tg = document.getElementById("run-tg");
+    const note = document.getElementById("run-note"), copy = document.getElementById("run-copy");
+    const full = text.textContent;
+    const NOTES = {
+      70: "high quality, for thumbnails and dense grids.",
+      80: "very high quality, for most sites.",
+      90: "visually lossless, for photography and heroes.",
+    };
+    tg.addEventListener("click", () => {
+      const next = { 70: 80, 80: 90, 90: 70 }[tg.textContent];
+      tg.textContent = next;
+      note.innerHTML = `<span>target ${next}</span>${NOTES[next]}`;
+      copy.dataset.copy = `${full} ${next}`;
+    });
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      text.textContent = ""; tg.hidden = true; note.style.visibility = "hidden";
+      let i = 0;
+      const type = () => {
+        text.textContent = full.slice(0, ++i);
+        if (i < full.length) setTimeout(type, full[i - 1] === " " ? 70 : 28 + Math.random() * 30);
+        else setTimeout(() => { tg.hidden = false; note.style.visibility = ""; }, 160);
+      };
+      setTimeout(type, 450);
+    }
+  }
+
+  // Demo. Tries, sizes and scores are what presize's search did on these files (site/demo).
+  {
+    const DATA = [
+      { name: "poster", label: "flat", file: "poster.png", w: 2336, h: 1558, bytes: 52755, kept: 50,
+        tries: [[95, 8972, 88.8], [57, 3910, 81.7], [38, 3340, 78.3], [48, 3646, 78.7], [53, 3878, 80.2], [51, 3822, 80.3], [50, 3764, 80.3], [49, 3666, 78.8]] },
+      { name: "strawberries", label: "busy", file: "strawberries.jpg", w: 5000, h: 3335, bytes: 1691189, kept: 85,
+        tries: [[95, 129980, 87.7], [57, 49286, 65.5], [76, 62172, 73.3], [86, 88496, 81.7], [81, 74266, 77.6], [84, 81644, 79.8], [85, 83906, 80.6]] },
+      { name: "jellyfish", label: "gradient", file: "jellyfish.jpg", w: 3500, h: 2333, bytes: 358083, kept: 93,
+        tries: [[95, 42036, 81.6], [57, 11708, 62], [76, 14788, 68.2], [86, 21536, 75.2], [91, 27508, 78.5], [93, 32542, 80.5], [92, 29820, 79.5]] },
+    ];
+    const TARGET = 80, LO = 20, HI = 95;
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const $ = (id) => document.getElementById(id);
+    const frame = $("demo-frame"), axis = $("demo-axis"), log = $("demo-log");
+    const [tryImg, err, refImg] = [frame.querySelector(".try"), frame.querySelector(".err"), frame.querySelector(".ref")];
+    const scan = frame.querySelector(".scan"), range = frame.querySelector("input"), br = axis.querySelector(".br");
+    const kib = (b) => (b >= 1048576 ? `${(b / 1048576).toFixed(1)} MiB` : `${(b / 1024).toFixed(1)} KiB`);
+    const pos = (q) => `${((q - LO) / (HI - LO)) * 100}%`;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const cache = new Map();
+    const load = (src) => {
+      if (!cache.has(src)) cache.set(src, new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+      return cache.get(src);
+    };
+    const url = (d, q) => `demo/${d.name}.${q === "ref" ? "ref" : `q${q}`}.webp`;
+
+    // Where a try differs from the source: a faint ghost of the image, darker where it differs.
+    function errorMap(ref, img) {
+      const w = ref.naturalWidth, h = ref.naturalHeight;
+      const c = new OffscreenCanvas(w, h), x = c.getContext("2d", { willReadFrequently: true });
+      x.drawImage(ref, 0, 0); const a = x.getImageData(0, 0, w, h).data;
+      x.drawImage(img, 0, 0); const b = x.getImageData(0, 0, w, h).data;
+      err.width = w; err.height = h;
+      const ctx = err.getContext("2d"), out = ctx.createImageData(w, h), o = out.data;
+      for (let i = 0; i < a.length; i += 4) {
+        // Brightness difference: the eye (and the score) cares less about colour shifts.
+        const d = Math.abs((a[i] - b[i]) * 0.3 + (a[i + 1] - b[i + 1]) * 0.59 + (a[i + 2] - b[i + 2]) * 0.11);
+        const v = Math.min(1, Math.max(0, (d - 4) / 16));
+        const ghost = 250 - (255 - (a[i] * 0.3 + a[i + 1] * 0.59 + a[i + 2] * 0.11)) * 0.1;
+        o[i] = o[i + 1] = o[i + 2] = ghost + (40 - ghost) * v; o[i + 3] = 255;
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+
+    const sweep = (ms, alive) => new Promise((done) => {
+      const t0 = performance.now();
+      scan.style.visibility = "visible";
+      const step = (now) => {
+        if (!alive()) return done();
+        const p = Math.min(1, (now - t0) / ms) * 100;
+        err.style.clipPath = `inset(0 0 ${100 - p}% 0)`;
+        scan.style.top = `${p}%`;
+        if (p < 100) requestAnimationFrame(step); else { scan.style.visibility = "hidden"; done(); }
+      };
+      requestAnimationFrame(step);
+    });
+
+    function line(t, keep) {
+      const [q, bytes, score] = t, ok = score >= TARGET, el = document.createElement("div");
+      if (keep) { el.className = "keep"; el.textContent = `keep q ${q} · ${kib(bytes)} · ${keep}`; }
+      else {
+        el.className = ok ? "ok" : "";
+        el.innerHTML = `<span>q ${q}</span><span>${kib(bytes)}</span><span>score ${score.toFixed(1)}</span><span>${ok ? "≥ 80" : "< 80"}</span>`;
+      }
+      log.append(el);
+    }
+
+    let token = 0, auto = !still, current = 0;
+    const tabs = DATA.map((d, i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = d.label;
+      b.addEventListener("click", () => { auto = false; play(i); });
+      $("demo-tabs").append(b);
+      return b;
+    });
+    range.addEventListener("input", () => { auto = false; frame.style.setProperty("--x", `${range.value}%`); });
+
+    async function play(i) {
+      const my = ++token, alive = () => my === token, d = DATA[i];
+      current = i;
+      tabs.forEach((b, j) => b.setAttribute("aria-pressed", String(j === i)));
+      $("demo-file").textContent = `${d.file}  ${d.w}×${d.h}  ${kib(d.bytes)}`;
+      frame.classList.remove("compare"); frame.style.setProperty("--x", "50%"); range.value = 50;
+      frame.style.aspectRatio = `${d.w} / ${d.h}`;
+      log.replaceChildren(); axis.querySelectorAll(".t").forEach((n) => n.remove());
+      $("demo-q").textContent = ""; $("demo-score").textContent = "";
+      $("demo-q").className = "tag tl"; $("demo-score").className = "tag tr";
+      err.style.opacity = 1; err.style.clipPath = "inset(0 0 100% 0)";
+      let lo = LO, hi = HI;
+      const bracket = () => { br.style.left = pos(lo); br.style.width = `calc(${pos(hi)} - ${pos(lo)})`; };
+      bracket();
+
+      const ref = await load(url(d, "ref"));
+      d.tries.forEach((t) => load(url(d, t[0])));
+      if (!alive()) return;
+      refImg.src = ref.src;
+      const kept = d.tries.find((t) => t[0] === d.kept);
+
+      for (const t of d.tries) {
+        const [q, bytes, score] = t, ok = score >= TARGET;
+        const img = await load(url(d, q));
+        if (!alive()) return;
+        tryImg.src = img.src;
+        $("demo-q").textContent = `q ${q} · ${kib(bytes)}`;
+        $("demo-score").textContent = still ? "" : "scoring…";
+        const tick = document.createElement("i");
+        tick.className = "t now"; tick.style.left = pos(q);
+        axis.querySelectorAll(".now").forEach((n) => n.classList.remove("now"));
+        axis.append(tick);
+        if (!still) {
+          errorMap(ref, img);
+          err.style.opacity = 1;
+          await sweep(750, alive);
+          if (!alive()) return;
+        }
+        $("demo-score").textContent = `score ${score.toFixed(1)}`;
+        tick.classList.toggle("ok", ok);
+        if (ok) hi = q; else lo = q + 1;
+        bracket();
+        line(t);
+        if (!still) {
+          await sleep(380);
+          err.style.opacity = 0;
+          await sleep(260);
+          if (!alive()) return;
+          err.style.clipPath = "inset(0 0 100% 0)";
+        }
+      }
+      axis.querySelectorAll(".now").forEach((n) => n.classList.remove("now"));
+      tryImg.src = url(d, d.kept);
+      line(kept, `${Math.round((1 - kept[1] / d.bytes) * 100)}% smaller than ${d.file}`);
+      $("demo-q").textContent = `presize q ${kept[0]} · ${kib(kept[1])}`;
+      $("demo-score").textContent = `source · ${kib(d.bytes)}`;
+      // Source on the left, the kept file on the right.
+      [$("demo-q").className, $("demo-score").className] = ["tag tr", "tag tl"];
+      frame.classList.add("compare");
+      await sleep(5200);
+      if (alive() && auto) play((i + 1) % DATA.length);
+    }
+
+    new IntersectionObserver((entries, o) => {
+      if (entries.some((e) => e.isIntersecting)) { o.disconnect(); play(0); }
+    }, { rootMargin: "200px" }).observe(frame);
+  }
+
+  // On-page nav: mark the section being read, the last heading above the top third.
+  {
+    const links = [...document.querySelectorAll(".toc ol a")];
+    const heads = links.map((a) => document.querySelector(a.getAttribute("href")));
+    let queued = false;
+    const mark = () => {
+      queued = false;
+      const line = innerHeight / 3;
+      let i = -1;
+      heads.forEach((h, j) => { if (h.getBoundingClientRect().top <= line) i = j; });
+      // At the bottom of the page the last sections can't scroll up to the line.
+      if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) i = heads.length - 1;
+      links.forEach((a, j) => (j === i ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current")));
+    };
+    addEventListener("scroll", () => { if (!queued) { queued = true; requestAnimationFrame(mark); } }, { passive: true });
+    mark();
+  }
+
+  // React Grab, on localhost only: hover an element and press ⌘C to copy it for a coding agent.
+  if (["localhost", "127.0.0.1"].includes(location.hostname)) {
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/react-grab@0.2.0/dist/index.global.js";
+    s.crossOrigin = "anonymous";
+    document.head.append(s);
+  }
+</script>
+</body>
+</html>
