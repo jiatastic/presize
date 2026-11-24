@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import type { Entry, Manifest } from "../src/manifest.ts";
 import { loaderData, withPresize } from "../src/next.ts";
 
@@ -48,7 +48,11 @@ test("the loader picks the smallest copy at least as wide as asked for", async (
 });
 
 test("withPresize sets up next/image and keeps the user's config", async () => {
-  const dir = await mkdtemp(path.join(os.tmpdir(), "presize-next-"));
+  // Inside the repository, so the loader has a relative path from it (the system temp folder
+  // can be on another drive on Windows).
+  const tmp = new URL("../node_modules/.cache/", import.meta.url);
+  await mkdir(tmp, { recursive: true });
+  const dir = await mkdtemp(path.join(fileURLToPath(tmp), "presize-next-"));
   const cwd = process.cwd();
   try {
     process.chdir(dir);

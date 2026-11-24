@@ -181,5 +181,8 @@ function loaderPath() {
   const here = fileURLToPath(
     new URL(import.meta.url.endsWith(".ts") ? "./next-loader.ts" : "./next-loader.js", import.meta.url),
   );
-  return `./${path.relative(process.cwd(), realpathSync(here)).split(path.sep).join("/")}`;
+  const rel = path.relative(process.cwd(), realpathSync(here));
+  // On Windows, a loader on another drive has no relative path.
+  if (path.isAbsolute(rel)) throw new Error(`presize: install presize inside the project; found it at ${here}`);
+  return `./${rel.split(path.sep).join("/")}`;
 }
