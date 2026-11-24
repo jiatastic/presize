@@ -1,6 +1,6 @@
 {
   "name": "presize",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Build-time image sizing: AVIF and WebP at the widths you display, a manifest with srcset and ThumbHash, incremental.",
   "license": "MIT",
   "author": "jiatastic520",

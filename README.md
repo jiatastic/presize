@@ -5,7 +5,7 @@ Build-time image optimization that picks the quality of each image by how it loo
 <p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0a0a0a.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
   <a href="package.json"><img alt="Node.js 20.9 or later" src="https://img.shields.io/badge/node-%E2%89%A520.9-0a0a0a.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
-  <a href="CHANGELOG.md"><img alt="Status: pre-release" src="https://img.shields.io/badge/status-pre--release-0a0a0a.svg?style=for-the-badge&amp;labelColor=000000" height="28"></a>
+  <a href="https://www.npmjs.com/package/presize"><img alt="npm version" src="https://img.shields.io/npm/v/presize.svg?style=for-the-badge&amp;labelColor=000000&amp;color=0a0a0a" height="28"></a>
 </p>
 
 presize turns a folder of images into AVIF and WebP files at the widths you display them, and
@@ -27,8 +27,7 @@ smallest file that reaches the score you ask for.
 npm install -D presize
 ```
 
-Requires Node.js 20.9 or later. presize isn't on npm yet; until it is, install it from this
-repository.
+Requires Node.js 20.9 or later.
 
 ## Quick start
 

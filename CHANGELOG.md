@@ -3,7 +3,7 @@
 This project follows [Semantic Versioning](https://semver.org). Until 1.0, minor versions may
 change the manifest format or the CLI.
 
-## Unreleased
+## 0.1.0 (2026-11-23)
 
 First release.
 
