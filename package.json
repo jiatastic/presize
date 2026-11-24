@@ -24,6 +24,14 @@
     "./manifest": {
       "types": "./dist/manifest.d.ts",
       "default": "./dist/manifest.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "default": "./dist/next.js"
+    },
+    "./next/loader": {
+      "types": "./dist/next-loader.d.ts",
+      "default": "./dist/next-loader.js"
     }
   },
   "files": [

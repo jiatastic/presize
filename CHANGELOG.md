@@ -18,3 +18,6 @@ First release.
 - SSIMULACRA2 in plain TypeScript, ported from the rust-av crate.
 - `presize/manifest`: types and `srcset`, `picture` and `pictureSources` helpers, with no
   runtime imports.
+- `presize/next`: `withPresize(nextConfig)` encodes `public/` during `next build` and sets
+  `next/image` to serve the WebP copies, with no image optimizer at request time. Works with
+  `output: "export"`, and keeps its output in `.next/cache` in CI.

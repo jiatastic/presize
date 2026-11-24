@@ -72,6 +72,47 @@ build the element yourself, `pictureSources(entry)` returns `{ avif, srcset, src
 | [`examples/astro`](examples/astro) | An Astro component, resolved at build time |
 | [`examples/node`](examples/node/build.mjs) | The programmatic API and the `picture()` HTML string |
 
+## Next.js
+
+Wrap your config, and `next/image` serves presized WebP from `public/` with no image
+optimizer at request time: no Vercel image quota, and it works with `output: "export"`.
+
+```ts
+// next.config.ts
+import { withPresize } from "presize/next";
+
+export default withPresize({
+  // your config
+});
+```
+
+```tsx
+<Image src="/photos/beach.jpg" width={1200} height={800} sizes="100vw" alt="" />
+// srcset="/_presize/photos/beach.3fa9c2d1.640.webp 640w, …1080.webp 1080w, …1920.webp 1920w"
+```
+
+- `next build` encodes `public/` into `public/_presize` before compiling. Only new or changed
+  images are encoded. In CI, the output is kept in `.next/cache`, so Vercel and other hosts
+  that keep that folder don't start over.
+- Each width `next/image` asks for gets the smallest copy at least that wide. `deviceSizes`
+  and `imageSizes` are set to the copies' widths unless you set them.
+- Copies get a year-long immutable `Cache-Control`, since their names carry a content hash.
+- Add `public/_presize` to `.gitignore`.
+
+Options: `out`, `widths` (default `[256, 640, 1080, 1920]`), `target` (default 80, `false` for
+a fixed `quality`), `quality`, `effort`, `concurrency`, `cache`.
+
+What it doesn't cover:
+
+- Only images under `public/`. Static imports, remote URLs, SVGs and GIFs load as they are.
+- WebP only. A loader returns one URL per width, so there's no AVIF `<source>`. Use
+  `presize/manifest` for `<picture>` with AVIF.
+- `next dev` doesn't encode. It serves what the last build made, and new images as they are.
+- A `next.config.ts` needs Node.js 20.19 or 22.12 or later: Next compiles it to CommonJS, which
+  loads ESM packages only from those versions on. `next.config.mjs` works on 20.9.
+- The loader holds the list of presized images, so it grows with them: about 60 bytes an image
+  before gzip.
+
 ## Choosing a target
 
 | Target | Looks like | Good for |
