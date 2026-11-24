@@ -1,7 +1,3 @@
-// presize for Next.js: `withPresize(nextConfig)` encodes public/ during `next build` and
-// installs a next/image loader that serves the copies, so no image goes through an optimizer
-// at request time. Only node built-ins load here; sharp loads when the build phase runs.
-
 import { existsSync, realpathSync } from "node:fs";
 import { cp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
@@ -22,23 +18,18 @@ export type PresizeNextOptions = {
   quality?: number;
   /** WebP effort, 0 to 6. Default 4. */
   effort?: number;
-  /** Images encoded at once. */
   concurrency?: number;
   /** Keep a copy of the output in .next/cache, so CI builds only encode new images. Default: on in CI. */
   cache?: boolean;
 };
 
-/** What the loader gets, through the PRESIZE_NEXT env value. */
 export type LoaderData = {
-  /** basePath, which src may start with. */
   base: string;
-  /** URL of the out folder, basePath included. */
   prefix: string;
   /** "/photos/a.jpg" → "<hash8> <width> <width> … [o<width>]", smallest first. */
   images: Record<string, string>;
 };
 
-// Loose on purpose: presize doesn't depend on next.
 // biome-ignore lint/suspicious/noExplicitAny: a Next config has many shapes
 type Config = Record<string, any>;
 // biome-ignore lint/suspicious/noExplicitAny: Next passes { defaultConfig }
@@ -88,8 +79,6 @@ async function encode(input: string, out: string, url: string, cache: string, o:
     out,
     base: url,
     widths: o.widths ?? DEFAULT_WIDTHS,
-    // One URL per width is all a loader can return, so one format: WebP, which every
-    // current browser shows.
     formats: ["webp"],
     target,
     quality: o.quality === undefined ? undefined : { webp: o.quality },
@@ -122,11 +111,9 @@ async function readManifest(out: string): Promise<Manifest | null> {
   }
 }
 
-/** The slim image list the loader reads: no manifest fields it doesn't use. */
 export function loaderData(manifest: Manifest | null, base: string, prefix: string): LoaderData {
   const images: Record<string, string> = {};
   for (const [key, e] of Object.entries(manifest?.images ?? {})) {
-    // A WebP copy of a GIF is one still frame.
     if (/\.gif$/i.test(key)) continue;
     const widths = (e.sources.webp ?? []).map((v) => String(v.width));
     if (e.original && !e.sources.webp?.some((v) => v.width === e.original?.width)) widths.push(`o${e.original.width}`);
@@ -144,7 +131,6 @@ function withImages(user: Config, data: LoaderData, widths: number[], cached: st
   if (images.loader && images.loader !== "custom" && images.loader !== "default") {
     throw new Error(`presize: images.loader is "${images.loader}"; withPresize needs it to be its own custom loader`);
   }
-  // srcset widths that match the copies, so each one maps to a file of that exact width.
   const sorted = [...new Set(widths)].sort((a, b) => a - b);
   const device = sorted.filter((w) => w >= 640);
   const deviceSizes = device.length ? device : sorted.slice(-1);
@@ -157,16 +143,13 @@ function withImages(user: Config, data: LoaderData, widths: number[], cached: st
       ...images,
       loader: "custom",
       loaderFile,
-      // The copies are made ahead of time, so the loader works with `output: "export"` too.
       unoptimized: false,
     },
-    // A static export has no server to send headers.
     ...(user.output === "export"
       ? {}
       : {
           async headers() {
             const own = (await user.headers?.()) ?? [];
-            // Every copy has the source's content hash in its name, so a URL's bytes never change.
             const immutable = [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }];
             return [...own, { source: cached, headers: immutable }];
           },
@@ -174,7 +157,6 @@ function withImages(user: Config, data: LoaderData, widths: number[], cached: st
   };
 }
 
-/** next/image wants the loader as a path inside the project, relative to it. */
 function loaderPath() {
   const linked = path.join("node_modules", "presize", "dist", "next-loader.js");
   if (existsSync(linked)) return `./${linked.split(path.sep).join("/")}`;

@@ -99,14 +99,11 @@ console.log(
 );
 process.exit(result.failed.length ? 1 : 0);
 
-/** Bytes a browser would fetch: every source at full size vs each output width. */
 function summary(m: Manifest, fs: Format[]) {
   const entries = Object.values(m.images);
   const src = entries.reduce((s, e) => s + e.bytes, 0);
   console.log(`${entries.length} images, ${mb(src)} as sources`);
   for (const f of fs) {
-    // For each width asked for, the file a browser wanting that width gets: narrower
-    // sources weren't enlarged, so they serve their own size.
     const parts = r.widths.map((w) => {
       const b = entries.reduce((s, e) => {
         const v = e.sources[f]?.find((x) => x.width === Math.min(w, e.width));
@@ -118,7 +115,6 @@ function summary(m: Manifest, fs: Format[]) {
   }
 }
 
-/** Median quality and score chosen, when they vary per image. */
 function qualities(entries: Manifest["images"][string][], f: Format) {
   const vs = entries.flatMap((e) => e.sources[f] ?? []).filter((v) => v.score !== undefined);
   if (!vs.length) return "";

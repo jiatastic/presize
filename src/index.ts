@@ -10,29 +10,23 @@ export { widthsFor } from "./encode.ts";
 export * from "./manifest.ts";
 
 export type Options = {
-  /** Folder of source images. Read only. */
   input: string;
-  /** Folder for the generated files and presize.json. */
   out: string;
   /** Exact output widths in pixels. Overrides `display`. */
   widths?: number[];
-  /** Width the image is shown at, in CSS pixels. Outputs one file per `dpr`. */
+  /** CSS width the image is shown at. Outputs one file per `dpr`. */
   display?: number;
   /** Device pixel ratios for `display`. Default [1, 2]. */
   dpr?: number[];
   formats?: Format[];
   /** Fixed quality per format. Used when there's no `target`, and for images under 8x8. */
   quality?: Partial<Record<Format, number>>;
-  /**
-   * SSIMULACRA2 score each file must reach (90 ≈ visually lossless, 70 ≈ high quality). Each
-   * image and width then gets the lowest quality that reaches it, instead of one fixed
-   * quality for all. Slower: several encodes per file.
-   */
+  /** SSIMULACRA2 score each file must reach (90 ≈ visually lossless, 70 ≈ high quality). */
   target?: number;
   effort?: Partial<Record<Format, number>>;
   /** URL prefix for `src` in the manifest. Inferred when `out` is inside ./public. */
   base?: string;
-  /** Images encoded at once, each in a worker thread. Default: a quarter of the cores, half with `target`. */
+  /** Default: a quarter of the cores, half with `target`. */
   concurrency?: number;
   onImage?: (event: {
     file: string;
@@ -89,13 +83,10 @@ export function resolve(o: Options): Resolved {
     effort: { ...DEFAULT_EFFORT, ...o.effort },
     target: o.target,
     base: o.base ?? inferBase(out),
-    // Fixed-quality runs are bound by the encoders, which use several threads each; scoring
-    // runs on one thread per image, so more images at once pay off.
     concurrency: o.concurrency ?? Math.max(1, Math.floor(os.availableParallelism() / (o.target === undefined ? 4 : 2))),
   };
 }
 
-/** `public/img` under the working directory is served at `/img`. */
 function inferBase(out: string) {
   const rel = path.relative(path.resolve("public"), out);
   if (rel.startsWith("..") || path.isAbsolute(rel)) return "";
@@ -133,7 +124,6 @@ export async function presize(options: Options): Promise<Result> {
       } catch (e) {
         const error = e instanceof Error ? e.message : String(e);
         result.failed.push({ file: key, error });
-        // Keep the last good output so a bad edit doesn't break the page.
         const old = previous?.images[key];
         if (old) manifest.images[key] = old;
         options.onImage?.({ file: key, done: ++done, total: files.length, status: "failed", error });
@@ -143,10 +133,8 @@ export async function presize(options: Options): Promise<Result> {
     await workers.close();
   }
 
-  // Stable key order keeps the manifest diff-friendly.
   manifest.images = Object.fromEntries(Object.entries(manifest.images).sort(([a], [b]) => (a < b ? -1 : 1)));
 
-  // Only files an earlier run wrote, and that this run no longer uses.
   if (previous) {
     const live = new Set(Object.values(manifest.images).flatMap((e) => outputFiles(e)));
     for (const e of Object.values(previous.images)) {
@@ -198,7 +186,6 @@ async function pool<T>(items: T[], n: number, run: (item: T) => Promise<void>) {
   );
 }
 
-/** Output paths of an entry, relative to the out folder. */
 function outputFiles(e: Entry): string[] {
   return [
     ...Object.values(e.sources).flatMap((list) => (list ?? []).map((v) => v.file)),
@@ -228,7 +215,6 @@ function toPosix(p: string) {
 export type Job = { id: number; r: Resolved; key: string; buf: Uint8Array; hash: string };
 export type Reply = { id: number; entry?: Entry; error?: string };
 
-/** Up to `max` worker threads, started on first use; each takes one image at a time. */
 class Workers {
   private idle: Worker[] = [];
   private waiting: ((w: Worker) => void)[] = [];
@@ -241,7 +227,6 @@ class Workers {
   }
 
   private spawn() {
-    // Run from source (.ts) in development, from dist (.js) when built.
     const url = new URL(import.meta.url.endsWith(".ts") ? "./worker.ts" : "./worker.js", import.meta.url);
     const w = new Worker(url);
     this.all.add(w);

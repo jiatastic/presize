@@ -5,17 +5,13 @@ import { rgbaToThumbHash } from "thumbhash";
 import type { Entry, Format, Resolved, Variant } from "./index.ts";
 import { type Encoded, encodeAt, reference, search } from "./quality.ts";
 
-/** Formats every browser shows, so the source itself can be served. */
 const WEB_SAFE = /\.(jpe?g|png|gif|webp)$/i;
 
-/** Widths for one source: never wider than the source, no duplicates. */
 export function widthsFor(source: number, wanted: number[]) {
   return [...new Set(wanted.map((w) => Math.min(w, source)))].sort((a, b) => a - b);
 }
 
-/** Makes every output file of one image and returns its manifest entry. */
 export async function encode(r: Resolved, key: string, buf: Buffer, h: string): Promise<Entry> {
-  // Every pipeline applies the EXIF orientation first, so widths are of the upright image.
   const source = () => sharp(buf, { failOn: "none" }).rotate();
   const meta = await sharp(buf, { failOn: "none" }).metadata();
   if (!meta.width || !meta.height) throw new Error("Can't read image size");
@@ -40,12 +36,10 @@ export async function encode(r: Resolved, key: string, buf: Buffer, h: string): 
   };
   const webSafe = WEB_SAFE.test(key);
   let keepOriginal = false;
-  // The answer at one width is a good first guess at the next.
   const hint: Partial<Record<Format, number>> = {};
   for (const width of widthsFor(info.width, r.widths)) {
     let img = source();
     if (width < info.width) img = img.resize({ width, kernel: "lanczos3" });
-    // Resized once; every format and every quality tried encodes these same pixels.
     const ref = await reference(img, r.target !== undefined);
     for (const format of r.formats) {
       let enc: Encoded;
@@ -55,7 +49,6 @@ export async function encode(r: Resolved, key: string, buf: Buffer, h: string): 
       } else {
         enc = await encodeAt(ref, format, r.quality[format], r.effort[format]);
       }
-      // Same pixels, more bytes, and lossy on top: the source is the better file.
       if (webSafe && width === info.width && enc.data.length >= buf.length) {
         keepOriginal = true;
         continue;

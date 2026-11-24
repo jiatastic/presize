@@ -47,8 +47,6 @@ for (const f of ["avif", "webp"]) {
     const missed = rows.filter((r) => r[k]!.score < t).length;
     const ms = rows.reduce((a, r) => a + (r[k]!.ms ?? 0), 0) / rows.length;
     const tries = rows.reduce((a, r) => a + (r[k]!.tries ?? 0), 0) / rows.length;
-    // The cheapest fixed quality whose p5 also reaches t, i.e. what a fixed setting must spend
-    // to get 95% of files to the same floor.
     const match = fixed.find(
       (fk) =>
         pct(

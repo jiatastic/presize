@@ -1,6 +1,5 @@
 name: Pages
 
-# Publishes site/ to GitHub Pages whenever it changes on main.
 on:
   push:
     branches: [main]

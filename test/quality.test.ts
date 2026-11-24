@@ -67,10 +67,8 @@ test("presize records quality and score per file with a target", async () => {
     for (const v of [...m.images["a.png"]!.sources.avif!, ...m.images["a.png"]!.sources.webp!]) {
       assert.ok(typeof v.quality === "number" && typeof v.score === "number", JSON.stringify(v));
     }
-    // Too small to score: fixed quality, no score.
     const dot = m.images["dot.png"]!;
     for (const v of Object.values(dot.sources).flat()) assert.equal(v!.score, undefined);
-    // A second run reuses everything.
     const again = await presize({
       input: path.join(dir, "in"),
       out: path.join(dir, "out"),

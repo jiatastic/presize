@@ -155,7 +155,6 @@
   dd { margin: 0; }
   dd span { color: var(--muted); }
 
-  /* Benchmark: two hairlines per row, fixed quality vs presize --target. */
   .bench { --s: 70%; display: block; width: 100%; margin: 0 0 18px; border-collapse: collapse; font: 13px/1 var(--mono); }
   .bench tbody { display: block; }
   .bench tr { display: grid; grid-template-columns: 92px 1fr; gap: 9px 16px; align-items: center; padding: 14px 0; border-top: 1px solid var(--line); }
@@ -171,7 +170,6 @@
   .key span.t::before { background: var(--ink); }
   .note { font-size: 13px; color: var(--muted); }
 
-  /* Hero command: types itself out; the target number is a button. */
   .run { margin: 0 0 44px; }
   .cmd { margin: 0 0 12px; padding: 18px 20px; font-size: 13px; white-space: pre-wrap; }
   .cmd .tg {
@@ -186,7 +184,6 @@
   .run-note span { color: var(--ink); margin-right: 8px; }
   @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
 
-  /* Demo: presize's real quality search on three images, replayed. */
   .demo { margin: 0 0 52px; font: 12.5px/1.6 var(--mono); }
   .demo .cap { flex-wrap: wrap; gap: 8px 16px; }
   .demo .file { color: var(--muted); }
@@ -217,7 +214,6 @@
   .frame.compare .hint { opacity: 1; }
   .frame .hint { top: auto; bottom: 10px; left: 50%; transform: translateX(-50%); opacity: 0; pointer-events: none; }
 
-  /* Quality axis: the bracket the bisection narrows, a square per try. */
   .track { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin: 18px 0 6px; color: var(--faint); }
   .axis { position: relative; height: 13px; }
   .axis::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--line); }
@@ -232,7 +228,6 @@
   .credit { margin-top: 8px; color: var(--faint); font-size: 11.5px; }
   .credit a { color: var(--faint); }
 
-  /* On-page nav, pinned to the far right on wide screens. */
   .toc { position: fixed; top: 56px; right: 56px; width: 176px; font: 12.5px/1.6 var(--mono); }
   .toc p { margin: 0 0 12px; color: var(--faint); }
   .toc ol, .toc ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
@@ -470,7 +465,6 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
     });
   }
 
-  // Hero command: type it out once, then let the target number cycle 70 / 80 / 90.
   {
     const text = document.getElementById("run-text"), tg = document.getElementById("run-tg");
     const note = document.getElementById("run-note"), copy = document.getElementById("run-copy");
@@ -498,7 +492,7 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
     }
   }
 
-  // Demo. Tries, sizes and scores are what presize's search did on these files (site/demo).
+  // Tries, sizes and scores are presize's real search on site/demo.
   {
     const DATA = [
       { name: "poster", label: "flat", file: "poster.png", w: 2336, h: 1558, bytes: 52755, kept: 50,
@@ -524,7 +518,6 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
     };
     const url = (d, q) => `demo/${d.name}.${q === "ref" ? "ref" : `q${q}`}.webp`;
 
-    // Where a try differs from the source: a faint ghost of the image, darker where it differs.
     function errorMap(ref, img) {
       const w = ref.naturalWidth, h = ref.naturalHeight;
       const c = new OffscreenCanvas(w, h), x = c.getContext("2d", { willReadFrequently: true });
@@ -533,7 +526,6 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
       err.width = w; err.height = h;
       const ctx = err.getContext("2d"), out = ctx.createImageData(w, h), o = out.data;
       for (let i = 0; i < a.length; i += 4) {
-        // Brightness difference: the eye (and the score) cares less about colour shifts.
         const d = Math.abs((a[i] - b[i]) * 0.3 + (a[i + 1] - b[i + 1]) * 0.59 + (a[i + 2] - b[i + 2]) * 0.11);
         const v = Math.min(1, Math.max(0, (d - 4) / 16));
         const ghost = 250 - (255 - (a[i] * 0.3 + a[i + 1] * 0.59 + a[i + 2] * 0.11)) * 0.1;
@@ -631,7 +623,6 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
       line(kept, `${Math.round((1 - kept[1] / d.bytes) * 100)}% smaller than ${d.file}`);
       $("demo-q").textContent = `presize q ${kept[0]} · ${kib(kept[1])}`;
       $("demo-score").textContent = `source · ${kib(d.bytes)}`;
-      // Source on the left, the kept file on the right.
       [$("demo-q").className, $("demo-score").className] = ["tag tr", "tag tl"];
       frame.classList.add("compare");
       await sleep(5200);
@@ -643,7 +634,6 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
     }, { rootMargin: "200px" }).observe(frame);
   }
 
-  // On-page nav: mark the section being read, the last heading above the top third.
   {
     const links = [...document.querySelectorAll(".toc ol a")];
     const heads = links.map((a) => document.querySelector(a.getAttribute("href")));
@@ -661,7 +651,7 @@ picture(data.images["hero.jpg"], { alt: "", sizes: "400px" });</pre>
     mark();
   }
 
-  // React Grab, on localhost only: hover an element and press ⌘C to copy it for a coding agent.
+  // React Grab, localhost only.
   if (["localhost", "127.0.0.1"].includes(location.hostname)) {
     const s = document.createElement("script");
     s.src = "https://unpkg.com/react-grab@0.2.0/dist/index.global.js";

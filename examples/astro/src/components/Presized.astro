@@ -1,14 +1,11 @@
 ---
-// Runs at build time: the manifest never reaches the browser.
 import { type Manifest, pictureSources } from "presize/manifest";
 import { thumbHashToDataURL } from "thumbhash";
 import data from "../../public/img/presize.json";
 
 interface Props {
-  /** Source path relative to ./images. */
   name: string;
   alt: string;
-  /** Same width as --display, e.g. "(max-width: 640px) 100vw, 400px". */
   sizes: string;
   priority?: boolean;
 }

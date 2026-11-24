@@ -42,14 +42,12 @@ test("the loader picks the smallest copy at least as wide as asked for", async (
   assert.equal(at("/photos/a b.jpg?v=2", 800), "/docs/_presize/photos/a%20b.abcdef01.1000.webp");
   assert.equal(at("/photos/a b.jpg", 4000), "/docs/_presize/photos/a%20b.abcdef01.1000.webp");
   assert.equal(at("/logo.png", 128), "/docs/_presize/logo.abcdef01.256.webp");
-  // Wider than any WebP: the source itself, with a dev-only fragment so Next doesn't warn.
   assert.equal(at("/logo.png", 640), "/logo.png#w=640");
   assert.equal(at("https://cdn.example.com/a.jpg", 640), "https://cdn.example.com/a.jpg#w=640");
 });
 
 test("withPresize sets up next/image and keeps the user's config", async () => {
-  // Inside the repository, so the loader has a relative path from it (the system temp folder
-  // can be on another drive on Windows).
+  // Inside the repo: on Windows the temp folder can be on another drive.
   const tmp = new URL("../node_modules/.cache/", import.meta.url);
   await mkdir(tmp, { recursive: true });
   const dir = await mkdtemp(path.join(fileURLToPath(tmp), "presize-next-"));

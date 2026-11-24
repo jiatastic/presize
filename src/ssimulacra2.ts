@@ -1,22 +1,12 @@
 /**
- * SSIMULACRA 2 in plain TypeScript: a perceptual score where 100 is identical, ~90 is
- * visually lossless at normal viewing, ~70 is "high quality", ~50 is "medium".
- *
- * Ported from the `ssimulacra2` Rust crate 0.5.1 (rust-av, BSD-2-Clause; license notice in
- * THIRD_PARTY.md) and its `yuvxyb` color conversion (MIT). The metric was designed by Jon
- * Sneyers at Cloudinary; the reference is in libjxl.
- *
- * The source side is prepared once (`prepare`) and reused for every distorted candidate,
- * because a quality search compares many encodes against the same original.
+ * SSIMULACRA 2 (100 identical, ~90 visually lossless, ~70 high quality), ported from the
+ * rust-av `ssimulacra2` crate 0.5.1 (BSD-2-Clause) and `yuvxyb` (MIT); see THIRD_PARTY.md.
  */
 
-/** Pixels as sRGB-encoded floats in 0..1, three planes. */
 export type Planes = { width: number; height: number; r: Float32Array; g: Float32Array; b: Float32Array };
 
 const SCALES = 6;
 const C2 = Math.fround(0.0009);
-
-// ---- sRGB → linear (yuvxyb transfer.rs) ----
 
 const SRGB_ALPHA = 1.0550107;
 const SRGB_BETA = 0.0030412825;
@@ -26,10 +16,6 @@ for (let i = 0; i < LUT.length; i++) {
   LUT[i] = x < 12.92 * SRGB_BETA ? x / 12.92 : ((x + (SRGB_ALPHA - 1)) / SRGB_ALPHA) ** 2.4;
 }
 
-/**
- * Interleaved 16-bit RGB (or 8-bit, `max` 255) to linear-light planes. 16-bit input goes
- * through a lookup table; that's exact for both depths.
- */
 export function linearPlanes(data: Uint16Array | Uint8Array, width: number, height: number, channels: number): Planes {
   const n = width * height;
   const r = new Float32Array(n);
@@ -44,9 +30,6 @@ export function linearPlanes(data: Uint16Array | Uint8Array, width: number, heig
   return { width, height, r, g, b };
 }
 
-// ---- linear RGB → XYB, then shifted to be positive (yuvxyb rgb_xyb.rs, ssimulacra2 lib.rs) ----
-
-// All in f32, as the reference computes them.
 const fr = Math.fround;
 const M02 = fr(0.078),
   M00 = fr(0.3),
@@ -70,7 +53,6 @@ function toXyb(p: Planes): [Float32Array, Float32Array, Float32Array] {
     const r = p.r[i]!,
       g = p.g[i]!,
       b = p.b[i]!;
-    // Fused multiply-adds: m0*r + (m1*g + (m2*b + bias)).
     const m0 = f(f(Math.cbrt(Math.max(0, f(M00 * r + f(M01 * g + f(M02 * b + BIAS)))))) - BIAS_CBRT);
     const m1 = f(f(Math.cbrt(Math.max(0, f(M10 * r + f(M11 * g + f(M12 * b + BIAS)))))) - BIAS_CBRT);
     const m2 = f(f(Math.cbrt(Math.max(0, f(M20 * r + f(M21 * g + f(M22 * b + BIAS)))))) - BIAS_CBRT);
@@ -114,8 +96,6 @@ function downscale(p: Planes): Planes {
   return out;
 }
 
-// ---- Recursive Gaussian, sigma 1.5 (Charalampidis 2016; ssimulacra2 build.rs + gaussian.rs) ----
-
 const K = (() => {
   const SIGMA = 1.5;
   const radius = Math.round(3.2795 * SIGMA + 0.2546);
@@ -140,7 +120,6 @@ const K = (() => {
     ],
     [1, radius * radius - SIGMA * SIGMA, z15 * rho[0]! + z35 * rho[1]! + rho[2]!],
   );
-  // The filter weights must be normalized.
   if (Math.abs(beta[0] * p1 + beta[1] * p3 + beta[2] * p5 - 1) > 1e-12) throw new Error("gaussian");
   const f = Math.fround;
   return {
@@ -164,21 +143,17 @@ function solve3(a: number[][], y: number[]): [number, number, number] {
   return [d(col(0)) / det, d(col(1)) / det, d(col(2)) / det];
 }
 
-/** Blurs `src` into a new plane. `tmp` must be at least width*height long. */
 function blur(src: Float32Array, width: number, height: number, tmp: Float32Array): Float32Array {
   const N = K.radius;
   const [a1, a3, a5] = K.n2;
   const [b1, b3, b5] = K.d1;
 
-  // Single-precision throughout, rounding where the reference's f32 math rounds (fused
-  // multiply-adds round once). The published scores come from f32 implementations, and
-  // f32 rounding noise is part of them; f64 here scored ~0.1 high.
+  // f32 throughout, like the reference; f64 scored ~0.1 high.
   const f = Math.fround;
   const na1 = -b1,
     na3 = -b3,
     na5 = -b5;
 
-  // Rows.
   for (let y = 0; y < height; y++) {
     const row = y * width;
     let p1 = 0,
@@ -204,7 +179,6 @@ function blur(src: Float32Array, width: number, height: number, tmp: Float32Arra
     }
   }
 
-  // Columns, all at once so memory is read row by row.
   const out = new Float32Array(width * height);
   const P = new Float32Array(3 * width);
   const Q = new Float32Array(3 * width);
@@ -237,8 +211,6 @@ function multiply(a: Float32Array, b: Float32Array, out: Float32Array) {
   return out;
 }
 
-// ---- Scoring ----
-
 type SourceScale = {
   width: number;
   height: number;
@@ -249,7 +221,6 @@ type SourceScale = {
 
 export type Prepared = { width: number; height: number; scales: SourceScale[] };
 
-/** Does the source-side work once: XYB, local means and variances at every scale. */
 export function prepare(source: Planes): Prepared {
   if (source.width < 8 || source.height < 8) throw new Error("SSIMULACRA2 needs at least 8x8 pixels");
   const scales: SourceScale[] = [];
@@ -257,8 +228,7 @@ export function prepare(source: Planes): Prepared {
   const mul = new Float32Array(source.width * source.height);
   let img = source;
   for (let s = 0; s < SCALES; s++) {
-    // The size check comes before the downscale, as in the reference: an 8-pixel scale is
-    // still halved once more and scored at 4 pixels.
+    // Size check before the downscale, as in the reference.
     if (img.width < 8 || img.height < 8) break;
     if (s > 0) img = downscale(img);
     const { width, height } = img;
@@ -275,7 +245,6 @@ export function prepare(source: Planes): Prepared {
   return { width: source.width, height: source.height, scales };
 }
 
-/** Score of `distorted` against a prepared source of the same size. */
 export function score(ref: Prepared, distorted: Planes): number {
   if (distorted.width !== ref.width || distorted.height !== ref.height) {
     throw new Error("Source and distorted image sizes differ");
@@ -309,7 +278,6 @@ export function score(ref: Prepared, distorted: Planes): number {
         det = 0,
         det4 = 0;
       for (let i = 0; i < n; i++) {
-        // f32 like the reference, then f64 for the sums.
         const mu1 = m1[i]!,
           mu2 = m2[i]!;
         const diff = f(mu1 - mu2);
@@ -341,7 +309,6 @@ export function score(ref: Prepared, distorted: Planes): number {
   return combine(ssim, edge);
 }
 
-/** One-shot score, for tests and tools. */
 export function ssimulacra2(source: Planes, distorted: Planes) {
   return score(prepare(source), distorted);
 }
@@ -363,7 +330,6 @@ function combine(ssim: number[][], edge: number[][]) {
   return s > 0 ? 100 - 10 * s ** 0.6276336467831387 : 100;
 }
 
-// 108 weights: 3 channels × 6 scales × 2 norms × (SSIM, ringing, blurring).
 const WEIGHT = [
   0.0, 0.0007376606707406586, 0.0, 0.0, 0.0007793481682867309, 0.0, 0.0, 0.0004371155730107379, 0.0, 1.1041726426657346,
   0.00066284834129271, 0.00015231632783718752, 0.0, 0.0016406437456599754, 0.0, 1.8422455520539298, 11.441172603757666,

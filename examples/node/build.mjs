@@ -1,11 +1,10 @@
-// Plain Node: make the files, then write HTML with picture().
 // node build.mjs, from a folder with ./images and ./public.
 import { writeFile } from "node:fs/promises";
 import { picture, presize } from "presize";
 
 const { manifest, made, kept, failed } = await presize({
   input: "images",
-  out: "public/img", // served at /img, which becomes the src prefix
+  out: "public/img",
   display: 400,
   target: 80,
 });

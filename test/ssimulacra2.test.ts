@@ -9,15 +9,12 @@ import { prepare, score, ssimulacra2 } from "../src/ssimulacra2.ts";
 
 const fixture = (f: string) => fileURLToPath(new URL(`./fixtures/${f}`, import.meta.url));
 
-// The Rust crate's test images. tank_*.png are 6.6 MB, so they're not in this repo: get them
-// from rust-av/ssimulacra2 (ssimulacra2/test_data) and set PRESIZE_TANK to their folder.
+// tank_*.png aren't in the repo: get them from rust-av/ssimulacra2 and set PRESIZE_TANK.
 const TANK = process.env.PRESIZE_TANK;
 
 test("matches the Rust crate on its reference pair", {
   skip: !TANK || !existsSync(path.join(TANK, "tank_source.png")),
 }, async () => {
-  // The crate expects 17.398505 and allows 0.25 (its CI wobbles). The distorted file carries
-  // a non-sRGB profile that the crate ignores, so this reads it the same way.
   const s = ssimulacra2(
     await planesOf(path.join(TANK!, "tank_source.png"), { ignoreIcc: true }),
     await planesOf(path.join(TANK!, "tank_distorted.png"), { ignoreIcc: true }),
@@ -26,8 +23,6 @@ test("matches the Rust crate on its reference pair", {
 });
 
 test("stays near the crate on a tiny pair", async () => {
-  // ssimulacra2_bin expects 95.30053. At 64x64 the coarsest scales are 8 and 4 pixels wide,
-  // where rounding differences between implementations move the score more.
   const s = ssimulacra2(await planesOf(fixture("untagged.png")), await planesOf(fixture("untagged_distorted.png")));
   assert.ok(Math.abs(s - 95.30053) < 0.05, `got ${s}`);
 });

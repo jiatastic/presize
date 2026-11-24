@@ -1,6 +1,3 @@
-// Equal-quality comparison on a folder of images, at one output width:
-//   - a sweep of fixed qualities: bytes and the score each file actually got
-//   - per-image search for each target score: bytes and the quality chosen
 // node bench/equal-quality.ts <dir> <out.jsonl> [--every 12] [--width 640] [--targets 70,80] [--shard 0/4]
 import { appendFile, readdir, readFile } from "node:fs/promises";
 import path from "node:path";

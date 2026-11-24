@@ -12,7 +12,6 @@ const v = (width: number, format: string) => ({
 });
 
 test("presize/manifest imports nothing at runtime", async () => {
-  // So loading it in a page or server component never pulls in sharp or node:fs.
   const src = await readFile(new URL("../src/manifest.ts", import.meta.url), "utf8");
   assert.deepEqual(src.match(/^\s*(import|export .* from)\b(?!\s+type\b).*$/gm), null);
 });
@@ -43,7 +42,6 @@ test("pictureSources offers AVIF only when it has the full size", () => {
 });
 
 test("srcset never lists a width twice", () => {
-  // AVIF came out bigger than the source, so it was kept; WebP came out smaller.
   const e: Entry = {
     width: 64,
     height: 32,
