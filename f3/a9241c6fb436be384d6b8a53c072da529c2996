@@ -1,0 +1,75 @@
+site/llms.txt
+  s_cb0e8543114bf5::t_710d20c36671b7 1-86
+.github/workflows/pages.yml
+  s_cb0e8543114bf5::t_6ed5f85c637dbe 1-32
+site/favicon.svg
+  s_cb0e8543114bf5::t_d6f7ae9ffd5f89 1
+site/sitemap.xml
+  s_cb0e8543114bf5::t_6ed5f85c637dbe 3-4
+  s_cb0e8543114bf5::t_d6f7ae9ffd5f89 1-2,5
+site/index.html
+  s_cb0e8543114bf5::t_14db1a11990552 536-538
+  s_cb0e8543114bf5::t_0c60e6494cc5ba 308
+  s_cb0e8543114bf5::t_8148e1a93813a6 174-175,177-188
+  s_cb0e8543114bf5::t_ea35853e97f832 403
+  s_cb0e8543114bf5::t_3cd8e86f31faeb 95
+  s_cb0e8543114bf5::t_a141dfd4f1001d 218
+  s_cb0e8543114bf5::t_6ed5f85c637dbe 10-14,17,20,33,36,55,459
+  s_cb0e8543114bf5::t_34f68aabdb7711 8,102,251,259-260
+  s_cb0e8543114bf5::t_26f6bfb2c0ef86 419-451,457-458
+  s_cb0e8543114bf5::t_3ec7263405ec75 468-469,471-472,664-669
+  s_cb0e8543114bf5::t_73325e4b6a890e 479,481
+  s_cb0e8543114bf5::t_542c85ce2022b4 6-7
+  s_cb0e8543114bf5::t_b721f165dd293b 336
+  s_cb0e8543114bf5::t_db281e45da182e 141-143,145-149
+  s_cb0e8543114bf5::t_09cc002bb57762 1-5,77-94,96-101,103-104,109-110,113,119,121-140,144,150-153,155-158,166-168,170-173,250,252-257,264-268,286,289,319-333,337-356,375-387,399-402,404-411,413,415-418,452-456,460-467,470,670-673
+  s_cb0e8543114bf5::t_aafab149818a60 261-262
+  s_cb0e8543114bf5::t_a1b8a9a7b60739 105-108,111-112
+  s_cb0e8543114bf5::t_3ce867cff5c68a 501-535,539-586,588-645
+  s_cb0e8543114bf5::t_8a7d7d56550716 357-374
+  s_cb0e8543114bf5::t_fae5255652ad84 154
+  s_cb0e8543114bf5::t_28d06a94695f4c 9,15-16,18-19,21-32,34-35,37-54,56-76
+  s_cb0e8543114bf5::t_6bc5717d1b08ad 159-165
+  s_cb0e8543114bf5::t_1060d811b987b9 646-663
+  s_cb0e8543114bf5::t_4dc2254799663e 169
+  s_cb0e8543114bf5::t_284bb2732ceab9 176
+  s_cb0e8543114bf5::t_672370fd53c6c9 290-292,294-295
+  s_cb0e8543114bf5::t_971681f70432cc 414
+  s_cb0e8543114bf5::t_049a85f1371124 473-478,480,482-500
+  s_cb0e8543114bf5::t_a3cae517cf7319 235-249
+  s_cb0e8543114bf5::t_fbd16696faa3b3 120
+  s_cb0e8543114bf5::t_5c79c303eefb95 334-335
+  s_cb0e8543114bf5::t_23cf4677b1f9a5 229
+  s_cb0e8543114bf5::t_a597af56e3cc51 287-288
+  s_cb0e8543114bf5::t_aa1eb1422515f1 388-398
+  s_cb0e8543114bf5::t_78edae27850d23 269-285
+  s_cb0e8543114bf5::t_8ababe1961ff7a 296-307,309-318
+  s_cb0e8543114bf5::t_c76b22b0bebaa5 412
+  s_cb0e8543114bf5::t_ec64f202e51031 587
+  s_cb0e8543114bf5::t_89b52c8befeb43 114-117
+  s_cb0e8543114bf5::t_65a78ca8c3e765 293
+  s_cb0e8543114bf5::t_2b95a64bf114fc 189-217,219-228,230-234
+  s_cb0e8543114bf5::t_37e6b4fb50bbce 258
+  s_cb0e8543114bf5::t_688faf5172ec6f 118,263
+site/robots.txt
+  s_cb0e8543114bf5::t_d6f7ae9ffd5f89 1-4
+  s_cb0e8543114bf5::t_6ed5f85c637dbe 5
+site/fonts/DepartureMono-LICENSE.txt
+  s_cb0e8543114bf5::t_577161a0b2c85d 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "f3a9241c6fb436be384d6b8a53c072da529c2996",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
