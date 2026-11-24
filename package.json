@@ -1,7 +1,7 @@
 {
   "name": "presize",
   "version": "0.1.0",
-  "description": "Build-time image sizing: AVIF and WebP at the widths you display, a manifest with srcset and ThumbHash, incremental.",
+  "description": "Build-time AVIF and WebP image optimization for Node.js and Next.js: the widths you display, each image at the lowest quality that reaches a SSIMULACRA2 target. Includes a next/image loader.",
   "license": "MIT",
   "author": "jiatastic520",
   "repository": {
@@ -67,7 +67,14 @@
     "srcset",
     "responsive-images",
     "thumbhash",
-    "build"
+    "build",
+    "image-optimization",
+    "nextjs",
+    "next-image",
+    "next-image-loader",
+    "static-export",
+    "ssimulacra2",
+    "sharp"
   ],
   "packageManager": "pnpm@10.11.0"
 }
