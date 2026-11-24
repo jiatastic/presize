@@ -1,0 +1,36 @@
+src/next-loader.ts
+  s_cb0e8543114bf5::t_64fcf44b860b5f 11
+site/index.html
+  s_cb0e8543114bf5::t_64fcf44b860b5f 495,654
+src/index.ts
+  s_cb0e8543114bf5::t_64fcf44b860b5f 17,24,29
+test/next.test.ts
+  s_cb0e8543114bf5::t_64fcf44b860b5f 50
+src/manifest.ts
+  s_cb0e8543114bf5::t_64fcf44b860b5f 18,21
+src/ssimulacra2.ts
+  s_cb0e8543114bf5::t_64fcf44b860b5f 2-3
+  s_cb0e8543114bf5::t_0e1d977d0c2c72 151,231
+examples/node/build.mjs
+  s_cb0e8543114bf5::t_4cd5347f4e25c0 7
+src/pixels.ts
+  s_cb0e8543114bf5::t_f937dbe228f2e7 15
+test/ssimulacra2.test.ts
+  s_cb0e8543114bf5::t_1d808cbae0cc7b 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "444ce4f1683753f0324f11e7f65013260410b450",
+  "prompts": {},
+  "sessions": {
+    "s_cb0e8543114bf5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "78808293-da8e-4290-81f2-416f88c1186c",
+        "model": "group/auto-claude-opus-5-5"
+      },
+      "human_author": "Haoxiang Jia <jiahaoxiangpersonal@gmail.com>"
+    }
+  }
+}
